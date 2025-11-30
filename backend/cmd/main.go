@@ -1,52 +1,116 @@
 package main
 
 import (
+	"fmt"
+	"io"
 	"log"
+	"net/http"
 	"os"
+	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
-
-	"github.com/namanjain.3009/daily_bazaar/internal/config"
-	"github.com/namanjain.3009/daily_bazaar/internal/handlers"
 )
 
+type Config struct {
+	SupabaseURL string
+	SupabaseKey string
+	Port        string
+}
+
 func main() {
-	_ = godotenv.Load()
+	// load .env
+	if err := godotenv.Load(); err != nil {
+		log.Printf("no .env loaded: %v", err)
+	}
 
-	cfg := config.Load()
+	config := Config{
+		SupabaseURL: os.Getenv("SUPABASE_URL"),
+		SupabaseKey: os.Getenv("SUPABASE_KEY"),
+		Port:        getEnv("PORT", "8080"),
+	}
 
-	gin.SetMode(gin.ReleaseMode)
-	r := gin.New()
-	r.Use(gin.Logger(), gin.Recovery())
+	if config.SupabaseURL == "" || config.SupabaseKey == "" {
+		log.Fatal("SUPABASE_URL and SUPABASE_KEY must be set in the environment (see .env)")
+	}
 
-	// Public auth
-	r.POST("/register", gin.WrapF(handlers.RegisterHandler))
-	r.POST("/login", gin.WrapF(handlers.LoginHandler))
+	// Set up routes
+	mux := http.NewServeMux()
+	mux.HandleFunc("/health", loggingMiddleware(healthCheckHandler(config)))
+	mux.HandleFunc("/api/supabase-test", loggingMiddleware(supabaseTestHandler(config)))
 
-	// Products & categories
-	r.GET("/products", gin.WrapF(handlers.ListProductsHandler))
-	r.GET("/products/:id", gin.WrapF(handlers.GetProductHandler))
-	r.GET("/categories", gin.WrapF(handlers.ListCategoriesHandler))
+	// Create server
+	server := &http.Server{
+		Addr:         ":" + config.Port,
+		Handler:      mux,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
+		IdleTimeout:  60 * time.Second,
+	}
 
-	// Cart & orders
-	r.POST("/cart", gin.WrapF(handlers.AddToCartHandler))
-	r.GET("/cart", gin.WrapF(handlers.GetCartHandler))
-	r.POST("/orders", gin.WrapF(handlers.CreateOrderHandler))
-	r.GET("/orders/:id", gin.WrapF(handlers.GetOrderHandler))
+	log.Printf("Server starting on port %s...\n", config.Port)
+	if err := server.ListenAndServe(); err != nil {
+		log.Fatalf("Server failed to start: %v", err)
+	}
+}
 
-	// Delivery
-	r.GET("/delivery/:id", gin.WrapF(handlers.TrackDeliveryHandler))
+// loggingMiddleware logs HTTP requests
+func loggingMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		log.Printf("%s %s from %s", r.Method, r.URL.Path, r.RemoteAddr)
+		next(w, r)
+		log.Printf("Completed in %v", time.Since(start))
+	}
+}
 
-	port := cfg.Port
-	if port == "" {
-		port = os.Getenv("PORT")
-		if port == "" {
-			port = "8080"
+// healthCheckHandler returns a simple health check
+func healthCheckHandler(config Config) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintf(w, `{"status":"ok","timestamp":"%s"}`, time.Now().Format(time.RFC3339))
+	}
+}
+
+// supabaseTestHandler tests the Supabase connection
+func supabaseTestHandler(config Config) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		endpoint := fmt.Sprintf("%s/rest/v1/", config.SupabaseURL)
+		req, err := http.NewRequest(http.MethodGet, endpoint, nil)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("failed to build request: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		req.Header.Set("Authorization", "Bearer "+config.SupabaseKey)
+		req.Header.Set("apikey", config.SupabaseKey)
+		req.Header.Set("Accept", "application/json")
+
+		client := &http.Client{Timeout: 10 * time.Second}
+		resp, err := client.Do(req)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("request failed: %v", err), http.StatusServiceUnavailable)
+			return
+		}
+		defer resp.Body.Close()
+
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+
+		w.Header().Set("Content-Type", "application/json")
+		if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+			w.WriteHeader(http.StatusOK)
+			fmt.Fprintf(w, `{"status":"connected","supabase_status":"%s","message":"Connection OK"}`, resp.Status)
+		} else {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			fmt.Fprintf(w, `{"status":"error","supabase_status":"%s","body":"%s"}`, resp.Status, string(body))
 		}
 	}
+}
 
-	if err := r.Run(":" + port); err != nil {
-		log.Fatalf("server failed: %v", err)
+// getEnv returns an environment variable or a default value
+func getEnv(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
 	}
+	return defaultValue
 }
