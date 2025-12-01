@@ -11,6 +11,8 @@ func SetupRoutes(
 	authHandler *handlers.AuthHandler,
 	productHandler *handlers.ProductHandler,
 	categoryHandler *handlers.CategoryHandler,
+	orderHandler *handlers.OrderHandler,
+	productImageHandler *handlers.ProductImageHandler,
 	authMiddleware *middleware.AuthMiddleware,
 	adminMiddleware *middleware.AdminMiddleware,
 ) *http.ServeMux {
@@ -42,6 +44,29 @@ func SetupRoutes(
 	mux.Handle("POST /api/products", authMiddleware.Authenticate(adminMiddleware.RequireAdmin(http.HandlerFunc(productHandler.CreateProduct))))
 	mux.Handle("PUT /api/products/{id}", authMiddleware.Authenticate(adminMiddleware.RequireAdmin(http.HandlerFunc(productHandler.UpdateProduct))))
 	mux.Handle("DELETE /api/products/{id}", authMiddleware.Authenticate(adminMiddleware.RequireAdmin(http.HandlerFunc(productHandler.DeleteProduct))))
+
+	// Product Image routes (public)
+	mux.HandleFunc("GET /api/products/{productId}/images", productImageHandler.GetProductImages)
+	mux.HandleFunc("GET /api/product-images/{id}", productImageHandler.GetImageByID)
+
+	// Product Image routes (admin only)
+	mux.Handle("POST /api/products/{productId}/images", authMiddleware.Authenticate(adminMiddleware.RequireAdmin(http.HandlerFunc(productImageHandler.AddImage))))
+	mux.Handle("POST /api/products/{productId}/images/bulk", authMiddleware.Authenticate(adminMiddleware.RequireAdmin(http.HandlerFunc(productImageHandler.AddMultipleImages))))
+	mux.Handle("PUT /api/product-images/{id}", authMiddleware.Authenticate(adminMiddleware.RequireAdmin(http.HandlerFunc(productImageHandler.UpdateImage))))
+	mux.Handle("PUT /api/products/{productId}/images/reorder", authMiddleware.Authenticate(adminMiddleware.RequireAdmin(http.HandlerFunc(productImageHandler.ReorderImages))))
+	mux.Handle("PUT /api/products/{productId}/images/{imageId}/primary", authMiddleware.Authenticate(adminMiddleware.RequireAdmin(http.HandlerFunc(productImageHandler.SetPrimaryImage))))
+	mux.Handle("DELETE /api/product-images/{id}", authMiddleware.Authenticate(adminMiddleware.RequireAdmin(http.HandlerFunc(productImageHandler.DeleteImage))))
+	mux.Handle("DELETE /api/products/{productId}/images", authMiddleware.Authenticate(adminMiddleware.RequireAdmin(http.HandlerFunc(productImageHandler.DeleteAllProductImages))))
+
+	// Order routes (authenticated users)
+	mux.Handle("POST /api/orders", authMiddleware.Authenticate(http.HandlerFunc(orderHandler.CreateOrder)))
+	mux.Handle("GET /api/orders/my", authMiddleware.Authenticate(http.HandlerFunc(orderHandler.GetMyOrders)))
+	mux.Handle("GET /api/orders/{id}", authMiddleware.Authenticate(http.HandlerFunc(orderHandler.GetOrderByID)))
+	mux.Handle("POST /api/orders/{id}/cancel", authMiddleware.Authenticate(http.HandlerFunc(orderHandler.CancelOrder)))
+
+	// Order routes (admin only)
+	mux.Handle("GET /api/orders", authMiddleware.Authenticate(adminMiddleware.RequireAdmin(http.HandlerFunc(orderHandler.GetAllOrders))))
+	mux.Handle("PUT /api/orders/{id}/status", authMiddleware.Authenticate(adminMiddleware.RequireAdmin(http.HandlerFunc(orderHandler.UpdateOrderStatus))))
 
 	return mux
 }

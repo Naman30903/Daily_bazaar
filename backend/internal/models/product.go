@@ -44,3 +44,25 @@ type ProductSearchParams struct {
 	Limit      int    `json:"limit,omitempty"`
 	Offset     int    `json:"offset,omitempty"`
 }
+
+type ProductImage struct {
+	ID        string `json:"id"`
+	ProductID string `json:"product_id"`
+	URL       string `json:"url"`
+	Position  int    `json:"position"`
+}
+
+type AddProductImage struct {
+	ProductID string `json:"product_id"`
+	URL       string `json:"url"`
+	Position  int    `json:"position"`
+}
+
+type UpdateProductImage struct {
+	URL      *string `json:"url,omitempty"`
+	Position *int    `json:"position,omitempty"`
+}
+
+type ReorderProductImages struct {
+	ImageIDs []string `json:"image_ids"` // IDs in desired order
+}
