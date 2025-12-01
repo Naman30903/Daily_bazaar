@@ -22,21 +22,24 @@ func main() {
 	// Initialize repositories
 	userRepo := repository.NewUserRepository()
 	productRepo := repository.NewProductRepository()
+	categoryRepo := repository.NewCategoryRepository()
 
 	// Initialize services
 	authService := services.NewAuthService(userRepo)
 	productService := services.NewProductService(productRepo)
+	categoryService := services.NewCategoryService(categoryRepo)
 
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(authService)
 	productHandler := handlers.NewProductHandler(productService)
+	categoryHandler := handlers.NewCategoryHandler(categoryService)
 
 	// Initialize middleware
 	authMiddleware := middleware.NewAuthMiddleware(authService)
 	adminMiddleware := middleware.NewAdminMiddleware(userRepo)
 
 	// Setup routes
-	mux := router.SetupRoutes(authHandler, productHandler, authMiddleware, adminMiddleware)
+	mux := router.SetupRoutes(authHandler, productHandler, categoryHandler, authMiddleware, adminMiddleware)
 
 	// Start server
 	port := os.Getenv("PORT")
