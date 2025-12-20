@@ -1,6 +1,7 @@
 import 'package:daily_bazaar_frontend/screens/register_page.dart';
 import 'package:daily_bazaar_frontend/shared_feature/api/auth_api.dart';
 import 'package:daily_bazaar_frontend/shared_feature/config/config.dart';
+import 'package:daily_bazaar_frontend/shared_feature/config/hive.dart';
 import 'package:daily_bazaar_frontend/shared_feature/helper/api_exception.dart';
 import 'package:daily_bazaar_frontend/shared_feature/models/auth_model.dart';
 import 'package:daily_bazaar_frontend/shared_feature/widgets/button.dart';
@@ -61,11 +62,14 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       final token = res.token;
+      if (token != null) {
+        await TokenStorage.saveToken(token); // <- persist token
+      }
       showAppSnackBar(
         context,
         token == null ? 'Logged in.' : 'Logged in. Token received.',
       );
-      // TODO: persist token securely + navigate to home
+      // TODO: navigate to home
     } catch (e) {
       showAppSnackBar(context, e.toString());
     } finally {

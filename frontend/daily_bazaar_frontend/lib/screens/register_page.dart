@@ -1,3 +1,4 @@
+import 'package:daily_bazaar_frontend/routes/route.dart';
 import 'package:daily_bazaar_frontend/shared_feature/api/auth_api.dart';
 import 'package:daily_bazaar_frontend/shared_feature/config/config.dart';
 import 'package:daily_bazaar_frontend/shared_feature/helper/api_exception.dart';
@@ -82,7 +83,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
     setState(() => _isLoading = true);
     try {
-      await _authApi.register(
+      final res = await _authApi.register(
         RegisterRequest(
           name: _name.text.trim(),
           email: _email.text.trim(),
@@ -93,8 +94,9 @@ class _RegisterPageState extends State<RegisterPage> {
       );
 
       if (!mounted) return;
+
       showAppSnackBar(context, 'Account created. Please login.');
-      Navigator.of(context).pop();
+      Navigator.of(context).pushReplacementNamed(Routes.login);
     } catch (e) {
       showAppSnackBar(context, e.toString());
     } finally {
