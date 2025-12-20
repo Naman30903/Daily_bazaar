@@ -6,16 +6,19 @@ class AuthApi {
 
   final ApiClient _client;
 
-  /// Expected Go backend endpoint: POST /auth/login
+  /// Go backend endpoint: POST /api/auth/login
   Future<AuthResponse> login(LoginRequest request) async {
-    final json = await _client.postJson('/auth/login', body: request.toJson());
+    final json = await _client.postJson(
+      '/api/auth/login',
+      body: request.toJson(),
+    );
     return AuthResponse.fromJson(json);
   }
 
-  /// Expected Go backend endpoint: POST /auth/register
+  /// Go backend endpoint: POST /api/auth/register
   Future<AuthResponse> register(RegisterRequest request) async {
     final json = await _client.postJson(
-      '/auth/register',
+      '/api/auth/register',
       body: request.toJson(),
     );
     return AuthResponse.fromJson(json);
