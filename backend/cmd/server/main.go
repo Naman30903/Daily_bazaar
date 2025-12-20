@@ -3,9 +3,8 @@ package main
 import (
 	"log"
 	"net/http"
-	"os"
 
-	"github.com/joho/godotenv"
+	"github.com/namanjain.3009/daily_bazaar/internal/config"
 	"github.com/namanjain.3009/daily_bazaar/internal/handlers"
 	"github.com/namanjain.3009/daily_bazaar/internal/middleware"
 	"github.com/namanjain.3009/daily_bazaar/internal/repository"
@@ -14,9 +13,9 @@ import (
 )
 
 func main() {
-	// Load environment variables
-	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found")
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	// Initialize repositories
@@ -55,14 +54,8 @@ func main() {
 		adminMiddleware,
 	)
 
-	// Start server
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
-
-	log.Printf("Server starting on port %s", port)
-	if err := http.ListenAndServe(":"+port, mux); err != nil {
+	log.Printf("Server starting on port %s", cfg.Port)
+	if err := http.ListenAndServe(":"+cfg.Port, mux); err != nil {
 		log.Fatal(err)
 	}
 }
