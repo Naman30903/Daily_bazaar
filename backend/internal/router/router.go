@@ -38,7 +38,9 @@ func SetupRoutes(
 	mux.HandleFunc("GET /api/products", productHandler.GetAllProducts)
 	mux.HandleFunc("GET /api/products/search", productHandler.SearchProducts)
 	mux.HandleFunc("GET /api/products/{id}", productHandler.GetProductByID)
-	mux.HandleFunc("GET /api/products/category/{categoryId}", productHandler.GetProductsByCategory)
+
+	// ✅ FIX: avoid ambiguous /api/categories/{categoryId}/products
+	mux.HandleFunc("GET /api/category-products/{categoryId}", productHandler.GetProductsByCategory)
 
 	// Product routes (admin only)
 	mux.Handle("POST /api/products", authMiddleware.Authenticate(adminMiddleware.RequireAdmin(http.HandlerFunc(productHandler.CreateProduct))))

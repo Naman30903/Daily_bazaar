@@ -33,6 +33,24 @@ migrate_working_dir/
 /build/
 /coverage/
 
+# Environment / secrets (keep out of git)
+.env
+.env.*
+!.env.example
+
+# Firebase / Google / signing keys (safety)
+**/google-services.json
+**/GoogleService-Info.plist
+**/*.keystore
+**/*.jks
+**/key.properties
+
+# Generated platform-specific artifacts
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/Flutter/ephemeral/
+**/macos/Flutter/ephemeral/
+
 # Symbolication related
 app.*.symbols
 

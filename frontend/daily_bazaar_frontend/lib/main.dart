@@ -1,3 +1,4 @@
+import 'package:daily_bazaar_frontend/screens/login_page.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -17,6 +18,9 @@ class DailyBazaarApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
         useMaterial3: true,
+        inputDecorationTheme: const InputDecorationTheme(
+          floatingLabelBehavior: FloatingLabelBehavior.auto,
+        ),
       ),
       onGenerateRoute: AppRouter.onGenerateRoute,
       initialRoute: Routes.splash,
@@ -28,6 +32,7 @@ class DailyBazaarApp extends StatelessWidget {
 abstract final class Routes {
   static const splash = '/';
   static const home = '/home';
+  static const login = '/login';
 }
 
 /// Centralized router (a single place to evolve navigation as the app grows).
@@ -38,6 +43,11 @@ abstract final class AppRouter {
         return MaterialPageRoute<void>(
           settings: settings,
           builder: (_) => const SplashPage(),
+        );
+      case Routes.login:
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) => const LoginPage(),
         );
       case Routes.home:
         return MaterialPageRoute<void>(
@@ -76,7 +86,9 @@ class _SplashPageState extends State<SplashPage> {
     await Future<void>.delayed(const Duration(milliseconds: 300));
 
     if (!mounted) return;
-    Navigator.of(context).pushReplacementNamed(Routes.home);
+
+    // TODO: if authenticated => Routes.home else Routes.login
+    Navigator.of(context).pushReplacementNamed(Routes.login);
   }
 
   @override

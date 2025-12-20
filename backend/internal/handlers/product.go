@@ -71,7 +71,7 @@ func (h *ProductHandler) GetProductByID(w http.ResponseWriter, r *http.Request) 
 	json.NewEncoder(w).Encode(product)
 }
 
-// GetProductsByCategory handles GET /api/products/category/{categoryId}
+// GetProductsByCategory handles GET /api/categories/{categoryId}/products
 func (h *ProductHandler) GetProductsByCategory(w http.ResponseWriter, r *http.Request) {
 	categoryID := r.PathValue("categoryId")
 	if categoryID == "" {
