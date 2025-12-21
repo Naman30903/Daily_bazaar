@@ -24,6 +24,7 @@ func main() {
 	categoryRepo := repository.NewCategoryRepository()
 	orderRepo := repository.NewOrderRepository()
 	productImageRepo := repository.NewProductImageRepository()
+	userAddressRepo := repository.NewUserAddressRepository()
 
 	// Initialize services
 	authService := services.NewAuthService(userRepo)
@@ -31,6 +32,7 @@ func main() {
 	categoryService := services.NewCategoryService(categoryRepo)
 	orderService := services.NewOrderService(orderRepo, productRepo)
 	productImageService := services.NewProductImageService(productImageRepo, productRepo)
+	userAddressService := services.NewUserAddressService(userAddressRepo)
 
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(authService)
@@ -38,6 +40,7 @@ func main() {
 	categoryHandler := handlers.NewCategoryHandler(categoryService)
 	orderHandler := handlers.NewOrderHandler(orderService, userRepo)
 	productImageHandler := handlers.NewProductImageHandler(productImageService)
+	userAddressHandler := handlers.NewUserAddressHandler(userAddressService)
 
 	// Initialize middleware
 	authMiddleware := middleware.NewAuthMiddleware(authService)
@@ -50,6 +53,7 @@ func main() {
 		categoryHandler,
 		orderHandler,
 		productImageHandler,
+		userAddressHandler,
 		authMiddleware,
 		adminMiddleware,
 	)
@@ -66,7 +70,5 @@ func main() {
 	handler := cors.Handler(mux)
 
 	log.Printf("Server starting on port %s", cfg.Port)
-	if err := http.ListenAndServe(":"+cfg.Port, handler); err != nil {
-		log.Fatal(err)
-	}
+	_ = http.ListenAndServe(":"+cfg.Port, handler)
 }
