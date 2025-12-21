@@ -1,3 +1,4 @@
+import 'package:daily_bazaar_frontend/routes/route.dart';
 import 'package:daily_bazaar_frontend/screens/register_page.dart';
 import 'package:daily_bazaar_frontend/shared_feature/api/auth_api.dart';
 import 'package:daily_bazaar_frontend/shared_feature/config/config.dart';
@@ -63,13 +64,13 @@ class _LoginPageState extends State<LoginPage> {
 
       final token = res.token;
       if (token != null) {
-        await TokenStorage.saveToken(token); // <- persist token
+        await TokenStorage.saveToken(token);
       }
-      showAppSnackBar(
-        context,
-        token == null ? 'Logged in.' : 'Logged in. Token received.',
-      );
-      // TODO: navigate to home
+
+      if (!mounted) return;
+
+      // Navigate to home
+      Navigator.of(context).pushReplacementNamed(Routes.home);
     } catch (e) {
       showAppSnackBar(context, e.toString());
     } finally {

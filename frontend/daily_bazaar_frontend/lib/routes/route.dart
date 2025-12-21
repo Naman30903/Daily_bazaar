@@ -1,6 +1,7 @@
-// ...existing code...
+import 'package:daily_bazaar_frontend/screens/home_page.dart';
 import 'package:flutter/material.dart';
 import 'package:daily_bazaar_frontend/screens/login_page.dart';
+import 'package:daily_bazaar_frontend/screens/register_page.dart';
 import 'package:daily_bazaar_frontend/shared_feature/config/hive.dart';
 
 /// Centralized route names (avoids stringly-typed navigation spread across app).
@@ -25,6 +26,11 @@ abstract final class AppRouter {
           settings: settings,
           builder: (_) => const LoginPage(),
         );
+      case Routes.register:
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) => const RegisterPage(),
+        );
       case Routes.home:
         return MaterialPageRoute<void>(
           settings: settings,
@@ -39,7 +45,7 @@ abstract final class AppRouter {
   }
 }
 
-/// Placeholder: bootstrapping screen. Later: load auth token/session then redirect.
+/// Placeholder: bootstrapping screen. Check token and route accordingly.
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
 
@@ -55,12 +61,16 @@ class _SplashPageState extends State<SplashPage> {
   }
 
   Future<void> _bootstrap() async {
-    // TODO: check TokenStorage.getToken() and decide route.
-    await Future<void>.delayed(const Duration(milliseconds: 300));
+    await Future<void>.delayed(const Duration(milliseconds: 500));
     if (!mounted) return;
 
-    // simple default: go to login. Change to HOME if authenticated.
-    Navigator.of(context).pushReplacementNamed(Routes.login);
+    // Check if user is logged in
+    final token = TokenStorage.getToken();
+    if (token != null && token.isNotEmpty) {
+      Navigator.of(context).pushReplacementNamed(Routes.home);
+    } else {
+      Navigator.of(context).pushReplacementNamed(Routes.login);
+    }
   }
 
   @override
@@ -77,17 +87,6 @@ class _SplashPageState extends State<SplashPage> {
   }
 }
 
-/// Placeholder home page
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
-
-  @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Daily Bazaar')),
-    body: const Center(child: Text('Home')),
-  );
-}
-
 class UnknownRoutePage extends StatelessWidget {
   const UnknownRoutePage({super.key, required this.routeName});
   final String? routeName;
@@ -100,4 +99,3 @@ class UnknownRoutePage extends StatelessWidget {
     );
   }
 }
-// ...existing code...
