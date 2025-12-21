@@ -1,9 +1,68 @@
+import 'package:daily_bazaar_frontend/shared_feature/api/user_api.dart';
+import 'package:daily_bazaar_frontend/shared_feature/config/config.dart';
 import 'package:daily_bazaar_frontend/shared_feature/config/hive.dart';
+import 'package:daily_bazaar_frontend/shared_feature/helper/api_exception.dart';
+import 'package:daily_bazaar_frontend/shared_feature/models/address_model.dart';
+import 'package:daily_bazaar_frontend/shared_feature/models/auth_model.dart';
+import 'package:daily_bazaar_frontend/shared_feature/models/user_model.dart';
 import 'package:daily_bazaar_frontend/shared_feature/widgets/snackbar.dart';
 import 'package:flutter/material.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  late final ApiClient _client = ApiClient(baseUrl: AppEnvironment.apiBaseUrl);
+  late final UserApi _userApi = UserApi(_client);
+
+  User? _user;
+  List<UserAddress>? _addresses;
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  @override
+  void dispose() {
+    _client.close();
+    super.dispose();
+  }
+
+  Future<void> _loadUserData() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final token = TokenStorage.getToken();
+      if (token == null || token.isEmpty) {
+        throw const ApiException('Not authenticated');
+      }
+
+      final user = await _userApi.getMe(token);
+      final addresses = await _userApi.listAddresses(token);
+
+      setState(() {
+        _user = user;
+        _addresses = addresses;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,120 +74,167 @@ class ProfilePage extends StatelessWidget {
         backgroundColor: cs.surface,
         elevation: 0,
         title: const Text('Profile'),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-        children: [
-          _ProfileHeader(name: null, phone: null),
-          const SizedBox(height: 14),
-
-          // Quick actions row (layout only; hook actions later)
-          Row(
-            children: const [
-              Expanded(
-                child: _QuickActionCard(
-                  icon: Icons.shopping_bag_outlined,
-                  label: 'Your orders',
-                ),
-              ),
-              SizedBox(width: 12),
-              Expanded(
-                child: _QuickActionCard(
-                  icon: Icons.account_balance_wallet_outlined,
-                  label: 'Wallet',
-                ),
-              ),
-              SizedBox(width: 12),
-              Expanded(
-                child: _QuickActionCard(
-                  icon: Icons.support_agent_outlined,
-                  label: 'Need help?',
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 18),
-
-          _SectionTitle(title: 'Your information'),
-          const SizedBox(height: 10),
-          _SettingsCard(
-            children: const [
-              _SettingsTile(
-                icon: Icons.location_on_outlined,
-                title: 'Address book',
-              ),
-              _Divider(),
-              _SettingsTile(
-                icon: Icons.favorite_border,
-                title: 'Your wishlist',
-              ),
-              _Divider(),
-            ],
-          ),
-
-          const SizedBox(height: 18),
-
-          _SectionTitle(title: 'Other information'),
-          const SizedBox(height: 10),
-          _SettingsCard(
-            children: [
-              const _SettingsTile(
-                icon: Icons.share_outlined,
-                title: 'Share the app',
-              ),
-              const _Divider(),
-              const _SettingsTile(icon: Icons.info_outline, title: 'About us'),
-              const _Divider(),
-              const _SettingsTile(
-                icon: Icons.lock_outline,
-                title: 'Account privacy',
-              ),
-              const _Divider(),
-              const _SettingsTile(
-                icon: Icons.notifications_none_outlined,
-                title: 'Notification preferences',
-              ),
-              const _Divider(),
-              _SettingsTile(
-                icon: Icons.logout,
-                title: 'Log out',
-                isDestructive: true,
-                onTap: () async {
-                  await TokenStorage.clearToken();
-                  if (context.mounted) {
-                    showAppSnackBar(context, 'Logged out');
-                    Navigator.of(
-                      context,
-                    ).pop(); // go back (or route to login later)
-                  }
-                },
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 18),
-          Center(
-            child: Text(
-              'daily bazaar',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: cs.onSurfaceVariant.withValues(alpha: 0.35),
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.2,
+        actions: [
+          if (_isLoading)
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
               ),
             ),
-          ),
-          const SizedBox(height: 6),
-          Center(
-            child: Text(
-              'v1.0.0',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: cs.onSurfaceVariant.withValues(alpha: 0.35),
-              ),
-            ),
-          ),
         ],
       ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _error != null
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Error loading profile',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _error!,
+                    style: Theme.of(context).textTheme.bodySmall,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: _loadUserData,
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            )
+          : RefreshIndicator(
+              onRefresh: _loadUserData,
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                children: [
+                  _ProfileHeader(name: _user?.fullName, phone: _user?.phone),
+                  const SizedBox(height: 14),
+
+                  // Quick actions row (layout only; hook actions later)
+                  Row(
+                    children: const [
+                      Expanded(
+                        child: _QuickActionCard(
+                          icon: Icons.shopping_bag_outlined,
+                          label: 'Your orders',
+                        ),
+                      ),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: _QuickActionCard(
+                          icon: Icons.account_balance_wallet_outlined,
+                          label: 'Wallet',
+                        ),
+                      ),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: _QuickActionCard(
+                          icon: Icons.support_agent_outlined,
+                          label: 'Need help?',
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 18),
+
+                  _SectionTitle(title: 'Your information'),
+                  const SizedBox(height: 10),
+                  _SettingsCard(
+                    children: [
+                      _SettingsTile(
+                        icon: Icons.location_on_outlined,
+                        title: 'Address book',
+                        subtitle: _addresses != null
+                            ? '${_addresses!.length} ${_addresses!.length == 1 ? 'address' : 'addresses'}'
+                            : null,
+                        onTap: () {
+                          // TODO: Navigate to address list
+                        },
+                      ),
+                      const _Divider(),
+                      const _SettingsTile(
+                        icon: Icons.favorite_border,
+                        title: 'Your wishlist',
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 18),
+
+                  _SectionTitle(title: 'Other information'),
+                  const SizedBox(height: 10),
+                  _SettingsCard(
+                    children: [
+                      const _SettingsTile(
+                        icon: Icons.share_outlined,
+                        title: 'Share the app',
+                      ),
+                      const _Divider(),
+                      const _SettingsTile(
+                        icon: Icons.info_outline,
+                        title: 'About us',
+                      ),
+                      const _Divider(),
+                      const _SettingsTile(
+                        icon: Icons.lock_outline,
+                        title: 'Account privacy',
+                      ),
+                      const _Divider(),
+                      const _SettingsTile(
+                        icon: Icons.notifications_none_outlined,
+                        title: 'Notification preferences',
+                      ),
+                      const _Divider(),
+                      _SettingsTile(
+                        icon: Icons.logout,
+                        title: 'Log out',
+                        isDestructive: true,
+                        onTap: () async {
+                          await TokenStorage.clearToken();
+                          if (context.mounted) {
+                            showAppSnackBar(context, 'Logged out');
+                            Navigator.of(
+                              context,
+                            ).pushReplacementNamed('/login');
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 18),
+                  Center(
+                    child: Text(
+                      'daily bazaar',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: cs.onSurfaceVariant.withValues(alpha: 0.35),
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Center(
+                    child: Text(
+                      'v1.0.0',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: cs.onSurfaceVariant.withValues(alpha: 0.35),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
     );
   }
 }
@@ -314,12 +420,14 @@ class _SettingsTile extends StatelessWidget {
   const _SettingsTile({
     required this.icon,
     required this.title,
+    this.subtitle,
     this.onTap,
     this.isDestructive = false,
   });
 
   final IconData icon;
   final String title;
+  final String? subtitle;
   final VoidCallback? onTap;
   final bool isDestructive;
 
@@ -337,12 +445,26 @@ class _SettingsTile extends StatelessWidget {
             Icon(icon, color: isDestructive ? cs.error : cs.onSurfaceVariant),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(
-                title,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: titleColor,
-                  fontWeight: FontWeight.w600,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: titleColor,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle!,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
             Icon(Icons.chevron_right, color: cs.onSurfaceVariant),

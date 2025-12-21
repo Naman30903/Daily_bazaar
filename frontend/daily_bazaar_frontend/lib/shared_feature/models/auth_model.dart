@@ -38,12 +38,14 @@ class User {
     required this.id,
     required this.email,
     this.fullName,
+    this.phone,
     this.createdAt,
   });
 
   final String id;
   final String email;
   final String? fullName;
+  final String? phone;
   final DateTime? createdAt;
 
   factory User.fromJson(Map<String, dynamic> json) {
