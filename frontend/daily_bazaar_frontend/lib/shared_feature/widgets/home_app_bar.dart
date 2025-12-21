@@ -1,3 +1,4 @@
+import 'package:daily_bazaar_frontend/routes/route.dart';
 import 'package:flutter/material.dart';
 
 class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -61,17 +62,37 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
       actions: [
         Padding(
           padding: const EdgeInsets.only(right: 12),
-          child: CircleAvatar(
-            radius: 18,
-            backgroundColor: cs.primaryContainer,
-            child: IconButton(
-              padding: EdgeInsets.zero,
-              onPressed: onProfileTap,
-              icon: Icon(Icons.person_outline, size: 20, color: cs.primary),
+          child: InkWell(
+            onTap: onProfileTap,
+            borderRadius: BorderRadius.circular(18),
+            child: CircleAvatar(
+              radius: 18,
+              backgroundColor: cs.primaryContainer,
+              child: Icon(Icons.person_outline, size: 20, color: cs.primary),
             ),
           ),
         ),
       ],
+    );
+  }
+}
+
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: HomeAppBar(
+        deliveryAddress: 'Home - Sector 62, Noida',
+        onProfileTap: () {
+          Navigator.of(context).pushNamed(Routes.profile);
+        },
+        onAddressTap: () {
+          // TODO: show address selection
+        },
+      ),
+      body: const Center(child: Text('Home Screen')),
     );
   }
 }

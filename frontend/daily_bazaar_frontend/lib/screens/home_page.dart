@@ -1,3 +1,4 @@
+import 'package:daily_bazaar_frontend/routes/route.dart';
 import 'package:daily_bazaar_frontend/shared_feature/models/home_models.dart';
 import 'package:daily_bazaar_frontend/shared_feature/widgets/category_grid_section.dart';
 import 'package:daily_bazaar_frontend/shared_feature/widgets/home_app_bar.dart';
@@ -223,9 +224,7 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: HomeAppBar(
         deliveryAddress: 'Home - Sector 62, Noida',
-        onProfileTap: () {
-          // TODO: navigate to profile
-        },
+        onProfileTap: () => Navigator.of(context).pushNamed(Routes.profile),
         onAddressTap: () {
           // TODO: show address selection
         },

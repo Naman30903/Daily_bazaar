@@ -1,6 +1,6 @@
 import 'package:daily_bazaar_frontend/routes/route.dart';
-import 'package:daily_bazaar_frontend/screens/login_page.dart';
 import 'package:daily_bazaar_frontend/shared_feature/config/hive.dart';
+import 'package:daily_bazaar_frontend/shared_feature/constant/app_theme.dart';
 import 'package:flutter/material.dart';
 
 void main() async {
@@ -17,13 +17,7 @@ class DailyBazaarApp extends StatelessWidget {
     return MaterialApp(
       title: 'Daily Bazaar',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
-        useMaterial3: true,
-        inputDecorationTheme: const InputDecorationTheme(
-          floatingLabelBehavior: FloatingLabelBehavior.auto,
-        ),
-      ),
+      theme: AppTheme.dark(),
       onGenerateRoute: AppRouter.onGenerateRoute,
       initialRoute: Routes.splash,
     );
