@@ -36,6 +36,7 @@ func main() {
 
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(authService)
+	userHandler := handlers.NewUserHandler(userRepo)
 	productHandler := handlers.NewProductHandler(productService)
 	categoryHandler := handlers.NewCategoryHandler(categoryService)
 	orderHandler := handlers.NewOrderHandler(orderService, userRepo)
@@ -49,6 +50,7 @@ func main() {
 	// Setup routes
 	mux := router.SetupRoutes(
 		authHandler,
+		userHandler,
 		productHandler,
 		categoryHandler,
 		orderHandler,

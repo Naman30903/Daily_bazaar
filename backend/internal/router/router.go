@@ -9,6 +9,7 @@ import (
 
 func SetupRoutes(
 	authHandler *handlers.AuthHandler,
+	userHandler *handlers.UserHandler,
 	productHandler *handlers.ProductHandler,
 	categoryHandler *handlers.CategoryHandler,
 	orderHandler *handlers.OrderHandler,
@@ -22,6 +23,9 @@ func SetupRoutes(
 	// Auth routes (public)
 	mux.HandleFunc("POST /api/auth/register", authHandler.Register)
 	mux.HandleFunc("POST /api/auth/login", authHandler.Login)
+
+	// User routes (authenticated)
+	mux.Handle("GET /api/user/me", authMiddleware.Authenticate(http.HandlerFunc(userHandler.GetMe)))
 
 	// Category routes (public)
 	mux.HandleFunc("GET /api/categories", categoryHandler.GetAllCategories)
