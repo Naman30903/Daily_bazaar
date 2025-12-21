@@ -13,6 +13,7 @@ func SetupRoutes(
 	categoryHandler *handlers.CategoryHandler,
 	orderHandler *handlers.OrderHandler,
 	productImageHandler *handlers.ProductImageHandler,
+	userAddressHandler *handlers.UserAddressHandler,
 	authMiddleware *middleware.AuthMiddleware,
 	adminMiddleware *middleware.AdminMiddleware,
 ) *http.ServeMux {
@@ -69,6 +70,12 @@ func SetupRoutes(
 	// Order routes (admin only)
 	mux.Handle("GET /api/orders", authMiddleware.Authenticate(adminMiddleware.RequireAdmin(http.HandlerFunc(orderHandler.GetAllOrders))))
 	mux.Handle("PUT /api/orders/{id}/status", authMiddleware.Authenticate(adminMiddleware.RequireAdmin(http.HandlerFunc(orderHandler.UpdateOrderStatus))))
+
+	// User Address routes (authenticated user)
+	mux.Handle("GET /api/user/addresses", authMiddleware.Authenticate(http.HandlerFunc(userAddressHandler.List)))
+	mux.Handle("POST /api/user/addresses", authMiddleware.Authenticate(http.HandlerFunc(userAddressHandler.Create)))
+	mux.Handle("PUT /api/user/addresses/{id}", authMiddleware.Authenticate(http.HandlerFunc(userAddressHandler.Update)))
+	mux.Handle("DELETE /api/user/addresses/{id}", authMiddleware.Authenticate(http.HandlerFunc(userAddressHandler.Delete)))
 
 	return mux
 }
