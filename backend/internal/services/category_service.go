@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"net/url"
 	"regexp"
 	"strings"
 
@@ -76,12 +77,20 @@ func (s *CategoryService) CreateCategory(req *models.AddCategory) (*models.Categ
 		}
 	}
 
+	// NEW: Validate image URL if provided
+	if req.ImageURL != "" {
+		if !isValidURL(req.ImageURL) {
+			return nil, errors.New("invalid image URL format")
+		}
+	}
+
 	category := &models.Category{
 		ID:       uuid.New().String(),
 		Name:     req.Name,
 		Slug:     req.Slug,
 		ParentID: req.ParentID,
 		Position: req.Position,
+		ImageURL: req.ImageURL, // NEW
 	}
 
 	if err := s.categoryRepo.CreateCategory(category); err != nil {
@@ -140,6 +149,14 @@ func (s *CategoryService) UpdateCategory(id string, req *models.UpdateCategory) 
 		updates["position"] = *req.Position
 	}
 
+	// NEW: Handle image URL update
+	if req.ImageURL != nil {
+		if *req.ImageURL != "" && !isValidURL(*req.ImageURL) {
+			return nil, errors.New("invalid image URL format")
+		}
+		updates["image_url"] = *req.ImageURL
+	}
+
 	if len(updates) == 0 {
 		return nil, errors.New("no fields to update")
 	}
@@ -168,4 +185,17 @@ func isValidSlug(slug string) bool {
 	}
 	matched, _ := regexp.MatchString(`^[a-z0-9]+(-[a-z0-9]+)*$`, slug)
 	return matched
+}
+
+// NEW: isValidURL validates URL format
+func isValidURL(urlStr string) bool {
+	if urlStr == "" {
+		return true // empty is valid (nullable)
+	}
+	parsedURL, err := url.ParseRequestURI(urlStr)
+	if err != nil {
+		return false
+	}
+	// Check if scheme is http or https
+	return parsedURL.Scheme == "http" || parsedURL.Scheme == "https"
 }

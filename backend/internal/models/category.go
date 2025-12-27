@@ -6,6 +6,7 @@ type Category struct {
 	Slug     string `json:"slug"`
 	ParentID string `json:"parent_id,omitempty"`
 	Position int    `json:"position"`
+	ImageURL string `json:"image_url,omitempty"`
 }
 
 type AddCategory struct {
@@ -13,6 +14,7 @@ type AddCategory struct {
 	Slug     string `json:"slug"`
 	ParentID string `json:"parent_id,omitempty"`
 	Position int    `json:"position"`
+	ImageURL string `json:"image_url,omitempty"`
 }
 
 type UpdateCategory struct {
@@ -20,4 +22,5 @@ type UpdateCategory struct {
 	Slug     *string `json:"slug,omitempty"`
 	ParentID *string `json:"parent_id,omitempty"`
 	Position *int    `json:"position,omitempty"`
+	ImageURL *string `json:"image_url,omitempty"`
 }
