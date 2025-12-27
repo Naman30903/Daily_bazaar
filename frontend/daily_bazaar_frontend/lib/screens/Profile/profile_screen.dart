@@ -4,7 +4,6 @@ import 'package:daily_bazaar_frontend/shared_feature/config/hive.dart';
 import 'package:daily_bazaar_frontend/shared_feature/helper/api_exception.dart';
 import 'package:daily_bazaar_frontend/shared_feature/models/address_model.dart';
 import 'package:daily_bazaar_frontend/shared_feature/models/auth_model.dart';
-import 'package:daily_bazaar_frontend/shared_feature/models/user_model.dart';
 import 'package:daily_bazaar_frontend/shared_feature/widgets/snackbar.dart';
 import 'package:flutter/material.dart';
 
@@ -158,7 +157,9 @@ class _ProfilePageState extends State<ProfilePage> {
                             ? '${_addresses!.length} ${_addresses!.length == 1 ? 'address' : 'addresses'}'
                             : null,
                         onTap: () {
-                          // TODO: Navigate to address list
+                          Navigator.of(
+                            context,
+                          ).pushReplacementNamed('/addresses');
                         },
                       ),
                       const _Divider(),

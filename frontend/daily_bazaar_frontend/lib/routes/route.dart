@@ -1,5 +1,6 @@
+import 'package:daily_bazaar_frontend/screens/Profile/address_screen.dart';
 import 'package:daily_bazaar_frontend/screens/home_page.dart';
-import 'package:daily_bazaar_frontend/screens/profile_screen.dart';
+import 'package:daily_bazaar_frontend/screens/Profile/profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:daily_bazaar_frontend/screens/login_page.dart';
 import 'package:daily_bazaar_frontend/screens/register_page.dart';
@@ -12,6 +13,7 @@ abstract final class Routes {
   static const login = '/login';
   static const register = '/register';
   static const profile = '/profile';
+  static const addresses = '/addresses';
 }
 
 /// Centralized router (single place for navigation evolution).
@@ -22,6 +24,11 @@ abstract final class AppRouter {
         return MaterialPageRoute<void>(
           settings: settings,
           builder: (_) => const SplashPage(),
+        );
+      case Routes.addresses:
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) => const AddressesPage(),
         );
       case Routes.login:
         return MaterialPageRoute<void>(
