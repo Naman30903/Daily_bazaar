@@ -26,9 +26,9 @@ func main() {
 	productImageRepo := repository.NewProductImageRepository()
 	userAddressRepo := repository.NewUserAddressRepository()
 
-	// Initialize services
+	// Initialize services - UPDATED: ProductService now needs categoryRepo
 	authService := services.NewAuthService(userRepo)
-	productService := services.NewProductService(productRepo)
+	productService := services.NewProductService(productRepo, categoryRepo) // ✅ CHANGED
 	categoryService := services.NewCategoryService(categoryRepo)
 	orderService := services.NewOrderService(orderRepo, productRepo)
 	productImageService := services.NewProductImageService(productImageRepo, productRepo)
@@ -60,7 +60,7 @@ func main() {
 		adminMiddleware,
 	)
 
-	// ✅ CORS (for local dev allow localhost frontends)
+	// CORS
 	cors := middleware.NewCORSMiddleware([]string{
 		"http://localhost:3000",
 		"http://127.0.0.1:3000",

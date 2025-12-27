@@ -10,48 +10,36 @@ import (
 )
 
 type ProductService struct {
-	productRepo *repository.ProductRepository
+	productRepo  *repository.ProductRepository
+	categoryRepo *repository.CategoryRepository
 }
 
-func NewProductService(productRepo *repository.ProductRepository) *ProductService {
+func NewProductService(productRepo *repository.ProductRepository, categoryRepo *repository.CategoryRepository) *ProductService {
 	return &ProductService{
-		productRepo: productRepo,
+		productRepo:  productRepo,
+		categoryRepo: categoryRepo,
 	}
 }
 
-func (s *ProductService) GetAllProducts(params *models.ProductSearchParams) ([]models.Product, error) {
-	return s.productRepo.GetAllProducts(params)
-}
-
-func (s *ProductService) GetProductByID(id string) (*models.Product, error) {
-	if id == "" {
-		return nil, errors.New("product ID is required")
-	}
-	return s.productRepo.GetProductByID(id)
-}
-
-func (s *ProductService) GetProductsByCategory(categoryID string) ([]models.Product, error) {
-	if categoryID == "" {
-		return nil, errors.New("category ID is required")
-	}
-	return s.productRepo.GetProductsByCategory(categoryID)
-}
-
-func (s *ProductService) SearchProducts(query string) ([]models.Product, error) {
-	if query == "" {
-		return nil, errors.New("search query is required")
-	}
-	return s.productRepo.SearchProducts(query)
-}
-
+// CreateProduct: transactional create with categories
 func (s *ProductService) CreateProduct(req *models.AddProduct) (*models.Product, error) {
+	// Validation
 	if req.Name == "" {
 		return nil, errors.New("product name is required")
 	}
 	if req.PriceCents < 0 {
 		return nil, errors.New("price cannot be negative")
 	}
+	if len(req.CategoryIDs) == 0 {
+		return nil, errors.New("at least one category is required")
+	}
 
+	// Validate all categories exist
+	if err := s.validateCategories(req.CategoryIDs); err != nil {
+		return nil, err
+	}
+
+	// Create product
 	product := &models.Product{
 		ID:          uuid.New().String(),
 		Name:        req.Name,
@@ -59,25 +47,40 @@ func (s *ProductService) CreateProduct(req *models.AddProduct) (*models.Product,
 		SKU:         req.SKU,
 		PriceCents:  req.PriceCents,
 		Stock:       req.Stock,
-		CategoryID:  req.CategoryID,
 		Active:      req.Active,
 		CreatedAt:   time.Now(),
 		Metadata:    req.Metadata,
 	}
 
+	// Step 1: Insert product
 	if err := s.productRepo.CreateProduct(product); err != nil {
 		return nil, err
 	}
 
-	return product, nil
+	// Step 2: Link categories (if this fails, manual rollback needed)
+	if err := s.productRepo.LinkProductCategories(product.ID, req.CategoryIDs); err != nil {
+		// Attempt rollback
+		s.productRepo.DeleteProduct(product.ID)
+		return nil, errors.New("failed to link categories: " + err.Error())
+	}
+
+	// Step 3: Fetch full product with categories
+	return s.productRepo.GetProductByID(product.ID)
 }
 
+// UpdateProduct: transactional update with optional category replacement
 func (s *ProductService) UpdateProduct(id string, req *models.UpdateProduct) (*models.Product, error) {
 	if id == "" {
 		return nil, errors.New("product ID is required")
 	}
 
-	// Build updates map with only provided fields
+	// Check if product exists
+	_, err := s.productRepo.GetProductByID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	// Build product field updates
 	updates := make(map[string]interface{})
 
 	if req.Name != nil {
@@ -98,9 +101,6 @@ func (s *ProductService) UpdateProduct(id string, req *models.UpdateProduct) (*m
 	if req.Stock != nil {
 		updates["stock"] = *req.Stock
 	}
-	if req.CategoryID != nil {
-		updates["category_id"] = *req.CategoryID
-	}
 	if req.Active != nil {
 		updates["active"] = *req.Active
 	}
@@ -108,16 +108,78 @@ func (s *ProductService) UpdateProduct(id string, req *models.UpdateProduct) (*m
 		updates["metadata"] = req.Metadata
 	}
 
-	if len(updates) == 0 {
-		return nil, errors.New("no fields to update")
+	// Update product fields if any
+	if len(updates) > 0 {
+		if _, err := s.productRepo.UpdateProduct(id, updates); err != nil {
+			return nil, err
+		}
 	}
 
-	return s.productRepo.UpdateProduct(id, updates)
+	// Handle category replacement if provided
+	if len(req.CategoryIDs) > 0 {
+		// Validate categories
+		if err := s.validateCategories(req.CategoryIDs); err != nil {
+			return nil, err
+		}
+
+		// Step 1: Delete old mappings
+		if err := s.productRepo.UnlinkAllProductCategories(id); err != nil {
+			return nil, errors.New("failed to unlink old categories: " + err.Error())
+		}
+
+		// Step 2: Insert new mappings
+		if err := s.productRepo.LinkProductCategories(id, req.CategoryIDs); err != nil {
+			return nil, errors.New("failed to link new categories: " + err.Error())
+		}
+	}
+
+	// Return updated product with categories
+	return s.productRepo.GetProductByID(id)
+}
+
+// GetAllProducts with optional category filter
+func (s *ProductService) GetAllProducts(params *models.ProductSearchParams) ([]models.Product, error) {
+	return s.productRepo.GetAllProducts(params)
+}
+
+func (s *ProductService) GetProductByID(id string) (*models.Product, error) {
+	if id == "" {
+		return nil, errors.New("product ID is required")
+	}
+	return s.productRepo.GetProductByID(id)
+}
+
+func (s *ProductService) SearchProducts(query string) ([]models.Product, error) {
+	if query == "" {
+		return nil, errors.New("search query is required")
+	}
+	return s.productRepo.SearchProducts(query)
 }
 
 func (s *ProductService) DeleteProduct(id string) error {
 	if id == "" {
 		return errors.New("product ID is required")
 	}
+	// Cascade will auto-delete product_categories
 	return s.productRepo.DeleteProduct(id)
+}
+
+// validateCategories checks if all category IDs exist
+func (s *ProductService) validateCategories(categoryIDs []string) error {
+	if len(categoryIDs) == 0 {
+		return errors.New("category IDs cannot be empty")
+	}
+
+	for _, catID := range categoryIDs {
+		if _, err := uuid.Parse(catID); err != nil {
+			return errors.New("invalid category UUID: " + catID)
+		}
+
+		// Check if category exists
+		if _, err := s.categoryRepo.GetCategoryByID(catID); err != nil {
+			return errors.New("category not found: " + catID)
+		}
+	}
+
+	return nil
 }

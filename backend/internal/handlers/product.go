@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/namanjain.3009/daily_bazaar/internal/middleware"
 	"github.com/namanjain.3009/daily_bazaar/internal/models"
@@ -35,8 +36,10 @@ func (h *ProductHandler) GetAllProducts(w http.ResponseWriter, r *http.Request) 
 			params.Offset = o
 		}
 	}
-	if categoryID := r.URL.Query().Get("category_id"); categoryID != "" {
-		params.CategoryID = categoryID
+
+	// Handle category_ids query param (comma-separated)
+	if categoryIDsStr := r.URL.Query().Get("category_ids"); categoryIDsStr != "" {
+		params.CategoryIDs = strings.Split(categoryIDsStr, ",")
 	}
 
 	products, err := h.productService.GetAllProducts(params)
@@ -71,7 +74,7 @@ func (h *ProductHandler) GetProductByID(w http.ResponseWriter, r *http.Request) 
 	json.NewEncoder(w).Encode(product)
 }
 
-// GetProductsByCategory handles GET /api/categories/{categoryId}/products
+// GetProductsByCategory handles GET /api/category-products/{categoryId}
 func (h *ProductHandler) GetProductsByCategory(w http.ResponseWriter, r *http.Request) {
 	categoryID := r.PathValue("categoryId")
 	if categoryID == "" {
@@ -79,7 +82,13 @@ func (h *ProductHandler) GetProductsByCategory(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	products, err := h.productService.GetProductsByCategory(categoryID)
+	// Use GetAllProducts with category filter
+	params := &models.ProductSearchParams{
+		CategoryIDs: []string{categoryID},
+		ActiveOnly:  true,
+	}
+
+	products, err := h.productService.GetAllProducts(params)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -109,15 +118,11 @@ func (h *ProductHandler) SearchProducts(w http.ResponseWriter, r *http.Request) 
 
 // CreateProduct handles POST /api/products (Admin only)
 func (h *ProductHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
-	// Check if user is admin
 	claims := middleware.GetUserFromContext(r.Context())
 	if claims == nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
-
-	// You'll need to verify admin status - for now checking from claims
-	// In production, you'd fetch user from DB and check IsAdmin field
 
 	var req models.AddProduct
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
