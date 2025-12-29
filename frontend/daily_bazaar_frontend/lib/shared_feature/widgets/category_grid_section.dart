@@ -51,6 +51,8 @@ class CategoryGridSection extends StatelessWidget {
             itemCount: categories.length > 8 ? 8 : categories.length,
             itemBuilder: (context, index) {
               final category = categories[index];
+              final hasImage = category.imageUrl.trim().isNotEmpty;
+
               return InkWell(
                 onTap: () => onCategoryTap?.call(category),
                 borderRadius: BorderRadius.circular(12),
@@ -65,15 +67,50 @@ class CategoryGridSection extends StatelessWidget {
                                 ).withValues(alpha: 0.15)
                               : cs.primaryContainer.withValues(alpha: 0.3),
                           borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Center(
-                          child: Icon(
-                            Icons.category_outlined,
-                            size: 32,
-                            color: category.backgroundColor != null
-                                ? Color(category.backgroundColor!)
-                                : cs.primary,
+                          border: Border.all(
+                            color: cs.outlineVariant.withValues(alpha: 0.35),
                           ),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: hasImage
+                              ? Image.network(
+                                  category.imageUrl,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return _CategoryFallbackIcon(
+                                      color: category.backgroundColor != null
+                                          ? Color(category.backgroundColor!)
+                                          : cs.primary,
+                                    );
+                                  },
+                                  loadingBuilder: (context, child, progress) {
+                                    if (progress == null) return child;
+                                    return Center(
+                                      child: SizedBox(
+                                        height: 18,
+                                        width: 18,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          value:
+                                              progress.expectedTotalBytes ==
+                                                      null ||
+                                                  progress.expectedTotalBytes ==
+                                                      0
+                                              ? null
+                                              : progress.cumulativeBytesLoaded /
+                                                    progress
+                                                        .expectedTotalBytes!,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                )
+                              : _CategoryFallbackIcon(
+                                  color: category.backgroundColor != null
+                                      ? Color(category.backgroundColor!)
+                                      : cs.primary,
+                                ),
                         ),
                       ),
                     ),
@@ -95,6 +132,30 @@ class CategoryGridSection extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _CategoryFallbackIcon extends StatelessWidget {
+  const _CategoryFallbackIcon({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
+    return Center(
+      child: Container(
+        height: 46,
+        width: 46,
+        decoration: BoxDecoration(
+          color: cs.surface.withValues(alpha: 0.65),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.35)),
+        ),
+        child: Icon(Icons.category_outlined, size: 28, color: color),
+      ),
     );
   }
 }

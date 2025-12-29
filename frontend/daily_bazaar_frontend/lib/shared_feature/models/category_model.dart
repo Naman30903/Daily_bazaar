@@ -5,6 +5,7 @@ class Category {
     required this.slug,
     this.parentId,
     required this.position,
+    this.imageUrl,
   });
 
   final String id;
@@ -13,6 +14,9 @@ class Category {
   final String? parentId;
   final int position;
 
+  /// NEW: optional category display image
+  final String? imageUrl;
+
   factory Category.fromJson(Map<String, dynamic> json) {
     return Category(
       id: json['id']?.toString() ?? '',
@@ -20,6 +24,7 @@ class Category {
       slug: json['slug']?.toString() ?? '',
       parentId: json['parent_id']?.toString(),
       position: (json['position'] as num?)?.toInt() ?? 0,
+      imageUrl: json['image_url']?.toString(),
     );
   }
 
@@ -29,6 +34,7 @@ class Category {
     'slug': slug,
     if (parentId != null) 'parent_id': parentId,
     'position': position,
+    if (imageUrl != null) 'image_url': imageUrl,
   };
 
   Category copyWith({
@@ -37,6 +43,7 @@ class Category {
     String? slug,
     String? parentId,
     int? position,
+    String? imageUrl,
   }) {
     return Category(
       id: id ?? this.id,
@@ -44,6 +51,7 @@ class Category {
       slug: slug ?? this.slug,
       parentId: parentId ?? this.parentId,
       position: position ?? this.position,
+      imageUrl: imageUrl ?? this.imageUrl,
     );
   }
 }
