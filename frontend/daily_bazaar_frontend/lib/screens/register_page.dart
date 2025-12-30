@@ -23,7 +23,6 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   final _password = TextEditingController();
   final _confirm = TextEditingController();
 
-  bool _isLoading = false;
   bool _obscure1 = true;
   bool _obscure2 = true;
 
@@ -76,7 +75,6 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     FocusScope.of(context).unfocus();
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    setState(() => _isLoading = true);
     try {
       final req = RegisterRequest(
         name: _name.text.trim(),
@@ -86,21 +84,22 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
         confirmPassword: _confirm.text,
       );
 
-      await ref.read(registerProvider(req).future);
+      // uses AsyncNotifier instead of FutureProvider.family
+      await ref.read(authControllerProvider.notifier).register(req);
 
       if (!mounted) return;
       showAppSnackBar(context, 'Account created. Please login.');
       Navigator.of(context).pushReplacementNamed(Routes.login);
     } catch (e) {
       showAppSnackBar(context, e.toString());
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final authState = ref.watch(authControllerProvider);
+    final isLoading = authState.isLoading;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Create account')),
@@ -186,8 +185,10 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                             prefixIcon: Icons.lock_outline,
                             validator: _validatePassword,
                             suffixIcon: IconButton(
-                              onPressed: () =>
-                                  setState(() => _obscure1 = !_obscure1),
+                              onPressed: isLoading
+                                  ? null
+                                  : () =>
+                                        setState(() => _obscure1 = !_obscure1),
                               icon: Icon(
                                 _obscure1
                                     ? Icons.visibility_outlined
@@ -205,8 +206,10 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                             prefixIcon: Icons.verified_user_outlined,
                             validator: _validateConfirm,
                             suffixIcon: IconButton(
-                              onPressed: () =>
-                                  setState(() => _obscure2 = !_obscure2),
+                              onPressed: isLoading
+                                  ? null
+                                  : () =>
+                                        setState(() => _obscure2 = !_obscure2),
                               icon: Icon(
                                 _obscure2
                                     ? Icons.visibility_outlined
@@ -218,8 +221,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                           const SizedBox(height: 18),
                           CustomButton(
                             label: 'Create account',
-                            isLoading: _isLoading,
-                            onPressed: _submit,
+                            isLoading: isLoading,
+                            onPressed: isLoading ? null : _submit,
                           ),
                           const SizedBox(height: 10),
                           Text(

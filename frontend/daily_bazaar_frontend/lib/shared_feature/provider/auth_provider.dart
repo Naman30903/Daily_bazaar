@@ -15,18 +15,48 @@ final authApiProvider = Provider<AuthApi>((ref) {
   return AuthApi(client);
 });
 
-final loginProvider = FutureProvider.family<AuthResponse, LoginRequest>((
-  ref,
-  req,
-) async {
-  final api = ref.watch(authApiProvider);
-  return api.login(req);
-});
+/// Holds the current auth request state (idle/loading/success/error) and exposes
+/// imperative methods for login/register.
+final authControllerProvider =
+    AsyncNotifierProvider<AuthController, AuthResponse?>(AuthController.new);
 
-final registerProvider = FutureProvider.family<AuthResponse, RegisterRequest>((
-  ref,
-  req,
-) async {
-  final api = ref.watch(authApiProvider);
-  return api.register(req);
-});
+class AuthController extends AsyncNotifier<AuthResponse?> {
+  @override
+  Future<AuthResponse?> build() async {
+    // idle state by default; screens can read `state` for loading/errors.
+    return null;
+  }
+
+  Future<AuthResponse> login(LoginRequest request) async {
+    state = const AsyncLoading();
+    final api = ref.read(authApiProvider);
+
+    try {
+      final res = await api.login(request);
+      state = AsyncData(res);
+      return res;
+    } catch (e) {
+      state = AsyncError(e, StackTrace.current);
+      rethrow;
+    }
+  }
+
+  Future<AuthResponse> register(RegisterRequest request) async {
+    state = const AsyncLoading();
+    final api = ref.read(authApiProvider);
+
+    try {
+      final res = await api.register(request);
+      state = AsyncData(res);
+      return res;
+    } catch (e) {
+      state = AsyncError(e, StackTrace.current);
+      rethrow;
+    }
+  }
+
+  void reset() {
+    // Useful when you want to clear error messages on page open/back.
+    state = const AsyncData(null);
+  }
+}

@@ -22,7 +22,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final _email = TextEditingController();
   final _password = TextEditingController();
 
-  bool _isLoading = false;
   bool _obscure = true;
 
   @override
@@ -51,17 +50,16 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     FocusScope.of(context).unfocus();
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    setState(() => _isLoading = true);
     try {
       final req = LoginRequest(
         email: _email.text.trim(),
         password: _password.text,
       );
 
-      final res = await ref.read(loginProvider(req).future);
+      final res = await ref.read(authControllerProvider.notifier).login(req);
 
       final token = res.token;
-      if (token != null) {
+      if (token != null && token.isNotEmpty) {
         await TokenStorage.saveToken(token);
       }
 
@@ -69,14 +67,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       Navigator.of(context).pushReplacementNamed(Routes.home);
     } catch (e) {
       showAppSnackBar(context, e.toString());
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final authState = ref.watch(authControllerProvider);
+    final isLoading = authState.isLoading;
 
     return Scaffold(
       body: Container(
@@ -141,8 +139,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             textInputAction: TextInputAction.done,
                             validator: _validatePassword,
                             suffixIcon: IconButton(
-                              onPressed: () =>
-                                  setState(() => _obscure = !_obscure),
+                              onPressed: isLoading
+                                  ? null
+                                  : () => setState(() => _obscure = !_obscure),
                               icon: Icon(
                                 _obscure
                                     ? Icons.visibility_outlined
@@ -154,12 +153,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           const SizedBox(height: 18),
                           CustomButton(
                             label: 'Login',
-                            isLoading: _isLoading,
-                            onPressed: _submit,
+                            isLoading: isLoading,
+                            onPressed: isLoading ? null : _submit,
                           ),
                           const SizedBox(height: 10),
                           TextButton(
-                            onPressed: _isLoading
+                            onPressed: isLoading
                                 ? null
                                 : () {
                                     Navigator.of(context).push(
