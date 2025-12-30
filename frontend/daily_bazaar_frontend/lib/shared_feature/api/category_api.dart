@@ -12,9 +12,28 @@ class CategoryApi {
     return json.map((item) => Category.fromJson(item)).toList();
   }
 
-  /// Get root categories: GET /api/categories/root
-  Future<List<Category>> getRootCategories() async {
-    final json = await _client.getJsonList('/api/categories/root');
+  Future<List<Category>> getRootCategories({
+    int? minPosition,
+    int? maxPosition,
+  }) async {
+    String path = '/api/categories/root';
+
+    final queryParams = <String, String>{};
+    if (minPosition != null) {
+      queryParams['min_position'] = minPosition.toString();
+    }
+    if (maxPosition != null) {
+      queryParams['max_position'] = maxPosition.toString();
+    }
+
+    if (queryParams.isNotEmpty) {
+      final query = queryParams.entries
+          .map((e) => '${e.key}=${e.value}')
+          .join('&');
+      path = '$path?$query';
+    }
+
+    final json = await _client.getJsonList(path);
     return json.map((item) => Category.fromJson(item)).toList();
   }
 

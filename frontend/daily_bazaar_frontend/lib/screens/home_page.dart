@@ -1,21 +1,24 @@
 import 'package:daily_bazaar_frontend/routes/route.dart';
+import 'package:daily_bazaar_frontend/shared_feature/models/category_model.dart';
 import 'package:daily_bazaar_frontend/shared_feature/models/home_models.dart';
+import 'package:daily_bazaar_frontend/shared_feature/provider/category_provider.dart';
 import 'package:daily_bazaar_frontend/shared_feature/widgets/category_grid_section.dart';
 import 'package:daily_bazaar_frontend/shared_feature/widgets/home_app_bar.dart';
 import 'package:daily_bazaar_frontend/shared_feature/widgets/offers_carousel.dart';
 import 'package:daily_bazaar_frontend/shared_feature/widgets/search_bar_widget.dart';
 import 'package:daily_bazaar_frontend/shared_feature/widgets/suggested_items_section.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../shared_feature/widgets/bottom_nav_bar.dart';
 
-class HomePage extends StatefulWidget {
+class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  ConsumerState<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends ConsumerState<HomePage> {
   int _currentNavIndex = 0;
 
   // Mock data - replace with actual API calls
@@ -66,161 +69,49 @@ class _HomePageState extends State<HomePage> {
     ),
   ];
 
-  final List<CategoryItem> _groceryCategories = const [
-    CategoryItem(
-      id: '1',
-      name: 'Dairy, Bread & Eggs',
-      imageUrl: '',
-      backgroundColor: 0xFFE3F2FD,
-    ),
-    CategoryItem(
-      id: '2',
-      name: 'Atta, Dal & Rice',
-      imageUrl: '',
-      backgroundColor: 0xFFFFF3E0,
-    ),
-    CategoryItem(
-      id: '3',
-      name: 'Sauces & Spreads',
-      imageUrl: '',
-      backgroundColor: 0xFFFCE4EC,
-    ),
-    CategoryItem(
-      id: '4',
-      name: 'Cooking Oil',
-      imageUrl: '',
-      backgroundColor: 0xFFF1F8E9,
-    ),
-    CategoryItem(
-      id: '5',
-      name: 'Spices',
-      imageUrl: '',
-      backgroundColor: 0xFFFFEBEE,
-    ),
-    CategoryItem(
-      id: '6',
-      name: 'Tea & Coffee',
-      imageUrl: '',
-      backgroundColor: 0xFFEDE7F6,
-    ),
-    CategoryItem(
-      id: '7',
-      name: 'Dry Fruits',
-      imageUrl: '',
-      backgroundColor: 0xFFFFF9C4,
-    ),
-    CategoryItem(
-      id: '8',
-      name: 'Packaged Food',
-      imageUrl: '',
-      backgroundColor: 0xFFE0F2F1,
-    ),
-  ];
+  // Position ranges for your 3 home sections:
+  // 1..8   -> Grocery & Kitchen
+  // 9..16  -> Snacks & Drinks
+  // 17..24 -> Personal Care
+  static const _groceryRange = RootCategoriesParams(
+    minPosition: 1,
+    maxPosition: 8,
+  );
+  static const _snacksRange = RootCategoriesParams(
+    minPosition: 9,
+    maxPosition: 16,
+  );
+  static const _personalCareRange = RootCategoriesParams(
+    minPosition: 17,
+    maxPosition: 24,
+  );
 
-  final List<CategoryItem> _snacksCategories = const [
-    CategoryItem(
-      id: '9',
-      name: 'Chips & Namkeen',
-      imageUrl: '',
-      backgroundColor: 0xFFFFE0B2,
-    ),
-    CategoryItem(
-      id: '10',
-      name: 'Biscuits',
-      imageUrl: '',
-      backgroundColor: 0xFFD7CCC8,
-    ),
-    CategoryItem(
-      id: '11',
-      name: 'Cold Drinks',
-      imageUrl: '',
-      backgroundColor: 0xFFB2DFDB,
-    ),
-    CategoryItem(
-      id: '12',
-      name: 'Juices',
-      imageUrl: '',
-      backgroundColor: 0xFFFFCDD2,
-    ),
-    CategoryItem(
-      id: '13',
-      name: 'Chocolates',
-      imageUrl: '',
-      backgroundColor: 0xFFD1C4E9,
-    ),
-    CategoryItem(
-      id: '14',
-      name: 'Energy Drinks',
-      imageUrl: '',
-      backgroundColor: 0xFFC5CAE9,
-    ),
-    CategoryItem(
-      id: '15',
-      name: 'Ice Cream',
-      imageUrl: '',
-      backgroundColor: 0xFFF8BBD0,
-    ),
-    CategoryItem(
-      id: '16',
-      name: 'Sweets',
-      imageUrl: '',
-      backgroundColor: 0xFFFFECB3,
-    ),
-  ];
-
-  final List<CategoryItem> _personalCareCategories = const [
-    CategoryItem(
-      id: '17',
-      name: 'Bath & Body',
-      imageUrl: '',
-      backgroundColor: 0xFFE1F5FE,
-    ),
-    CategoryItem(
-      id: '18',
-      name: 'Hair Care',
-      imageUrl: '',
-      backgroundColor: 0xFFF3E5F5,
-    ),
-    CategoryItem(
-      id: '19',
-      name: 'Skin Care',
-      imageUrl: '',
-      backgroundColor: 0xFFFCE4EC,
-    ),
-    CategoryItem(
-      id: '20',
-      name: 'Oral Care',
-      imageUrl: '',
-      backgroundColor: 0xFFE8F5E9,
-    ),
-    CategoryItem(
-      id: '21',
-      name: 'Hygiene',
-      imageUrl: '',
-      backgroundColor: 0xFFFFF3E0,
-    ),
-    CategoryItem(
-      id: '22',
-      name: 'Fragrances',
-      imageUrl: '',
-      backgroundColor: 0xFFE0F2F1,
-    ),
-    CategoryItem(
-      id: '23',
-      name: 'Men\'s Grooming',
-      imageUrl: '',
-      backgroundColor: 0xFFECEFF1,
-    ),
-    CategoryItem(
-      id: '24',
-      name: 'Wellness',
-      imageUrl: '',
-      backgroundColor: 0xFFF1F8E9,
-    ),
-  ];
+  List<CategoryItem> _mapToItems(
+    List<Category> categories, {
+    int? fallbackColor,
+  }) {
+    return categories
+        .map(
+          (c) => CategoryItem(
+            id: c.id,
+            name: c.name,
+            imageUrl: c.imageUrl ?? '',
+            backgroundColor: fallbackColor,
+          ),
+        )
+        .toList();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final groceryAsync = ref.watch(
+      filteredRootCategoriesProvider(_groceryRange),
+    );
+    final snacksAsync = ref.watch(filteredRootCategoriesProvider(_snacksRange));
+    final personalAsync = ref.watch(
+      filteredRootCategoriesProvider(_personalCareRange),
+    );
+
     return Scaffold(
       appBar: HomeAppBar(
         deliveryAddress: 'Home - Sector 62, Noida',
@@ -251,7 +142,6 @@ class _HomePageState extends State<HomePage> {
                 // TODO: navigate to product detail
               },
               onAddToCart: (product) {
-                // TODO: add to cart
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('${product.name} added to cart'),
@@ -261,38 +151,71 @@ class _HomePageState extends State<HomePage> {
               },
             ),
             const SizedBox(height: 16),
-            CategoryGridSection(
-              title: 'Grocery & Kitchen',
-              categories: _groceryCategories,
-              onCategoryTap: (category) {
-                // TODO: navigate to category products
-              },
-              onSeeAllTap: () {
-                // TODO: navigate to all grocery categories
-              },
+
+            // Grocery & Kitchen (positions 1..8)
+            groceryAsync.when(
+              data: (cats) => CategoryGridSection(
+                title: 'Grocery & Kitchen',
+                categories: _mapToItems(cats, fallbackColor: 0xFFE3F2FD),
+                onCategoryTap: (category) {
+                  // TODO: navigate to category products / subcategories
+                },
+              ),
+              loading: () =>
+                  const _CategorySectionSkeleton(title: 'Grocery & Kitchen'),
+              error: (e, _) => _CategorySectionError(
+                title: 'Grocery & Kitchen',
+                message: e.toString(),
+                onRetry: () => ref.invalidate(
+                  filteredRootCategoriesProvider(_groceryRange),
+                ),
+              ),
             ),
+
             const SizedBox(height: 16),
-            CategoryGridSection(
-              title: 'Snacks & Drinks',
-              categories: _snacksCategories,
-              onCategoryTap: (category) {
-                // TODO: navigate to category products
-              },
-              onSeeAllTap: () {
-                // TODO: navigate to all snacks categories
-              },
+
+            // Snacks & Drinks (positions 9..16)
+            snacksAsync.when(
+              data: (cats) => CategoryGridSection(
+                title: 'Snacks & Drinks',
+                categories: _mapToItems(cats, fallbackColor: 0xFFFFE0B2),
+                onCategoryTap: (category) {
+                  // TODO: navigate to category products / subcategories
+                },
+              ),
+              loading: () =>
+                  const _CategorySectionSkeleton(title: 'Snacks & Drinks'),
+              error: (e, _) => _CategorySectionError(
+                title: 'Snacks & Drinks',
+                message: e.toString(),
+                onRetry: () => ref.invalidate(
+                  filteredRootCategoriesProvider(_snacksRange),
+                ),
+              ),
             ),
+
             const SizedBox(height: 16),
-            CategoryGridSection(
-              title: 'Personal Care',
-              categories: _personalCareCategories,
-              onCategoryTap: (category) {
-                // TODO: navigate to category products
-              },
-              onSeeAllTap: () {
-                // TODO: navigate to all personal care categories
-              },
+
+            // Personal Care (positions 17..24)
+            personalAsync.when(
+              data: (cats) => CategoryGridSection(
+                title: 'Personal Care',
+                categories: _mapToItems(cats, fallbackColor: 0xFFE1F5FE),
+                onCategoryTap: (category) {
+                  // TODO: navigate to category products / subcategories
+                },
+              ),
+              loading: () =>
+                  const _CategorySectionSkeleton(title: 'Personal Care'),
+              error: (e, _) => _CategorySectionError(
+                title: 'Personal Care',
+                message: e.toString(),
+                onRetry: () => ref.invalidate(
+                  filteredRootCategoriesProvider(_personalCareRange),
+                ),
+              ),
             ),
+
             const SizedBox(height: 24),
           ],
         ),
@@ -308,6 +231,126 @@ class _HomePageState extends State<HomePage> {
             // Navigate to trending page
           }
         },
+      ),
+    );
+  }
+}
+
+class _CategorySectionSkeleton extends StatelessWidget {
+  const _CategorySectionSkeleton({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Text(
+            title,
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 4,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: 0.8,
+            ),
+            itemCount: 8,
+            itemBuilder: (_, __) => Column(
+              children: [
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: cs.surfaceContainerHighest.withValues(alpha: 0.25),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: cs.outlineVariant.withValues(alpha: 0.35),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Container(
+                  height: 10,
+                  width: 52,
+                  decoration: BoxDecoration(
+                    color: cs.surfaceContainerHighest.withValues(alpha: 0.25),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CategorySectionError extends StatelessWidget {
+  const _CategorySectionError({
+    required this.title,
+    required this.message,
+    required this.onRetry,
+  });
+
+  final String title;
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              Icon(Icons.error_outline, color: cs.error),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      message,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              TextButton(onPressed: onRetry, child: const Text('Retry')),
+            ],
+          ),
+        ),
       ),
     );
   }

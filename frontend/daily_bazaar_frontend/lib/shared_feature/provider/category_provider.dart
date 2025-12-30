@@ -21,11 +21,43 @@ final allCategoriesProvider = FutureProvider<List<Category>>((ref) async {
   return api.getAllCategories();
 });
 
-// Provider for root categories
+/// Parameters for fetching root categories with optional position range.
+class RootCategoriesParams {
+  const RootCategoriesParams({this.minPosition, this.maxPosition});
+
+  final int? minPosition;
+  final int? maxPosition;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is RootCategoriesParams &&
+          runtimeType == other.runtimeType &&
+          minPosition == other.minPosition &&
+          maxPosition == other.maxPosition;
+
+  @override
+  int get hashCode => Object.hash(minPosition, maxPosition);
+}
+
+// Provider for root categories (no filters)
 final rootCategoriesProvider = FutureProvider<List<Category>>((ref) async {
   final api = ref.watch(categoryApiProvider);
   return api.getRootCategories();
 });
+
+// Provider for root categories with optional position range
+final filteredRootCategoriesProvider =
+    FutureProvider.family<List<Category>, RootCategoriesParams>((
+      ref,
+      params,
+    ) async {
+      final api = ref.watch(categoryApiProvider);
+      return api.getRootCategories(
+        minPosition: params.minPosition,
+        maxPosition: params.maxPosition,
+      );
+    });
 
 // Provider for subcategories by parent ID
 final subcategoriesProvider = FutureProvider.family<List<Category>, String>((
