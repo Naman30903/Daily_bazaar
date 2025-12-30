@@ -1,5 +1,3 @@
-import 'package:daily_bazaar_frontend/shared_feature/models/auth_model.dart';
-
 class UserAddress {
   const UserAddress({
     required this.id,

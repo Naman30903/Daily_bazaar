@@ -241,11 +241,10 @@ class _ProfilePageState extends State<ProfilePage> {
 }
 
 class _ProfileHeader extends StatelessWidget {
-  const _ProfileHeader({this.name, this.phone, this.dobText});
+  const _ProfileHeader({this.name, this.phone});
 
   final String? name;
   final String? phone;
-  final String? dobText;
 
   @override
   Widget build(BuildContext context) {
@@ -286,12 +285,6 @@ class _ProfileHeader extends StatelessWidget {
                       label: (phone?.trim().isNotEmpty ?? false)
                           ? phone!
                           : 'Phone',
-                    ),
-                    _MetaChip(
-                      icon: Icons.cake_outlined,
-                      label: (dobText?.trim().isNotEmpty ?? false)
-                          ? dobText!
-                          : 'DOB',
                     ),
                   ],
                 ),
