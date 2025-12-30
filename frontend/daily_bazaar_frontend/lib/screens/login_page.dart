@@ -1,23 +1,22 @@
 import 'package:daily_bazaar_frontend/routes/route.dart';
 import 'package:daily_bazaar_frontend/screens/register_page.dart';
-import 'package:daily_bazaar_frontend/shared_feature/api/auth_api.dart';
-import 'package:daily_bazaar_frontend/shared_feature/config/config.dart';
 import 'package:daily_bazaar_frontend/shared_feature/config/hive.dart';
-import 'package:daily_bazaar_frontend/shared_feature/helper/api_exception.dart';
 import 'package:daily_bazaar_frontend/shared_feature/models/auth_model.dart';
+import 'package:daily_bazaar_frontend/shared_feature/provider/auth_provider.dart';
 import 'package:daily_bazaar_frontend/shared_feature/widgets/button.dart';
 import 'package:daily_bazaar_frontend/shared_feature/widgets/snackbar.dart';
 import 'package:daily_bazaar_frontend/shared_feature/widgets/textfield.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class LoginPage extends StatefulWidget {
+class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  ConsumerState<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _LoginPageState extends ConsumerState<LoginPage> {
   final _formKey = GlobalKey<FormState>();
 
   final _email = TextEditingController();
@@ -26,14 +25,10 @@ class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
   bool _obscure = true;
 
-  late final ApiClient _client = ApiClient(baseUrl: AppEnvironment.apiBaseUrl);
-  late final AuthApi _authApi = AuthApi(_client);
-
   @override
   void dispose() {
     _email.dispose();
     _password.dispose();
-    _client.close();
     super.dispose();
   }
 
@@ -58,9 +53,12 @@ class _LoginPageState extends State<LoginPage> {
 
     setState(() => _isLoading = true);
     try {
-      final res = await _authApi.login(
-        LoginRequest(email: _email.text.trim(), password: _password.text),
+      final req = LoginRequest(
+        email: _email.text.trim(),
+        password: _password.text,
       );
+
+      final res = await ref.read(loginProvider(req).future);
 
       final token = res.token;
       if (token != null) {
@@ -68,8 +66,6 @@ class _LoginPageState extends State<LoginPage> {
       }
 
       if (!mounted) return;
-
-      // Navigate to home
       Navigator.of(context).pushReplacementNamed(Routes.home);
     } catch (e) {
       showAppSnackBar(context, e.toString());

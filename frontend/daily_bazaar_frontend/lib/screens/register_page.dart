@@ -1,21 +1,20 @@
 import 'package:daily_bazaar_frontend/routes/route.dart';
-import 'package:daily_bazaar_frontend/shared_feature/api/auth_api.dart';
-import 'package:daily_bazaar_frontend/shared_feature/config/config.dart';
-import 'package:daily_bazaar_frontend/shared_feature/helper/api_exception.dart';
 import 'package:daily_bazaar_frontend/shared_feature/models/auth_model.dart';
+import 'package:daily_bazaar_frontend/shared_feature/provider/auth_provider.dart';
 import 'package:daily_bazaar_frontend/shared_feature/widgets/button.dart';
 import 'package:daily_bazaar_frontend/shared_feature/widgets/snackbar.dart';
 import 'package:daily_bazaar_frontend/shared_feature/widgets/textfield.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class RegisterPage extends StatefulWidget {
+class RegisterPage extends ConsumerStatefulWidget {
   const RegisterPage({super.key});
 
   @override
-  State<RegisterPage> createState() => _RegisterPageState();
+  ConsumerState<RegisterPage> createState() => _RegisterPageState();
 }
 
-class _RegisterPageState extends State<RegisterPage> {
+class _RegisterPageState extends ConsumerState<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
 
   final _name = TextEditingController();
@@ -28,9 +27,6 @@ class _RegisterPageState extends State<RegisterPage> {
   bool _obscure1 = true;
   bool _obscure2 = true;
 
-  late final ApiClient _client = ApiClient(baseUrl: AppEnvironment.apiBaseUrl);
-  late final AuthApi _authApi = AuthApi(_client);
-
   @override
   void dispose() {
     _name.dispose();
@@ -38,7 +34,6 @@ class _RegisterPageState extends State<RegisterPage> {
     _mobile.dispose();
     _password.dispose();
     _confirm.dispose();
-    _client.close();
     super.dispose();
   }
 
@@ -83,18 +78,17 @@ class _RegisterPageState extends State<RegisterPage> {
 
     setState(() => _isLoading = true);
     try {
-      final res = await _authApi.register(
-        RegisterRequest(
-          name: _name.text.trim(),
-          email: _email.text.trim(),
-          mobile: _mobile.text.trim(),
-          password: _password.text,
-          confirmPassword: _confirm.text,
-        ),
+      final req = RegisterRequest(
+        name: _name.text.trim(),
+        email: _email.text.trim(),
+        mobile: _mobile.text.trim(),
+        password: _password.text,
+        confirmPassword: _confirm.text,
       );
 
-      if (!mounted) return;
+      await ref.read(registerProvider(req).future);
 
+      if (!mounted) return;
       showAppSnackBar(context, 'Account created. Please login.');
       Navigator.of(context).pushReplacementNamed(Routes.login);
     } catch (e) {
