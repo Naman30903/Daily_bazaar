@@ -131,8 +131,19 @@ func (r *CategoryRepository) GetSubcategories(parentID string) ([]models.Categor
 	return categories, nil
 }
 
-func (r *CategoryRepository) GetRootCategories() ([]models.Category, error) {
-	urlStr := fmt.Sprintf("%s/rest/v1/categories?parent_id=is.null&order=position.asc", r.baseURL)
+// GetRootCategories fetches root categories with optional position range filter.
+func (r *CategoryRepository) GetRootCategories(minPosition, maxPosition *int) ([]models.Category, error) {
+	urlStr := fmt.Sprintf("%s/rest/v1/categories?parent_id=is.null", r.baseURL)
+
+	// Optional position range filters
+	if minPosition != nil {
+		urlStr += fmt.Sprintf("&position=gte.%d", *minPosition)
+	}
+	if maxPosition != nil {
+		urlStr += fmt.Sprintf("&position=lte.%d", *maxPosition)
+	}
+
+	urlStr += "&order=position.asc"
 
 	req, err := http.NewRequest(http.MethodGet, urlStr, nil)
 	if err != nil {

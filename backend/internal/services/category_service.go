@@ -46,8 +46,12 @@ func (s *CategoryService) GetSubcategories(parentID string) ([]models.Category, 
 	return s.categoryRepo.GetSubcategories(parentID)
 }
 
-func (s *CategoryService) GetRootCategories() ([]models.Category, error) {
-	return s.categoryRepo.GetRootCategories()
+func (s *CategoryService) GetRootCategories(minPosition, maxPosition *int) ([]models.Category, error) {
+	// Basic validation if both provided
+	if minPosition != nil && maxPosition != nil && *minPosition > *maxPosition {
+		return nil, errors.New("min_position cannot be greater than max_position")
+	}
+	return s.categoryRepo.GetRootCategories(minPosition, maxPosition)
 }
 
 func (s *CategoryService) CreateCategory(req *models.AddCategory) (*models.Category, error) {

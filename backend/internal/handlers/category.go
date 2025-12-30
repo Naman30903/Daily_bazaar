@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/namanjain.3009/daily_bazaar/internal/middleware"
 	"github.com/namanjain.3009/daily_bazaar/internal/models"
@@ -30,10 +31,34 @@ func (h *CategoryHandler) GetAllCategories(w http.ResponseWriter, r *http.Reques
 }
 
 // GetRootCategories handles GET /api/categories/root
+// Optional query params:
+// - min_position (int)
+// - max_position (int)
 func (h *CategoryHandler) GetRootCategories(w http.ResponseWriter, r *http.Request) {
-	categories, err := h.categoryService.GetRootCategories()
+	var minPos *int
+	var maxPos *int
+
+	if v := r.URL.Query().Get("min_position"); v != "" {
+		n, err := strconv.Atoi(v)
+		if err != nil {
+			http.Error(w, "min_position must be an integer", http.StatusBadRequest)
+			return
+		}
+		minPos = &n
+	}
+
+	if v := r.URL.Query().Get("max_position"); v != "" {
+		n, err := strconv.Atoi(v)
+		if err != nil {
+			http.Error(w, "max_position must be an integer", http.StatusBadRequest)
+			return
+		}
+		maxPos = &n
+	}
+
+	categories, err := h.categoryService.GetRootCategories(minPos, maxPos)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
