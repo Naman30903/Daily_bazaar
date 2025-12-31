@@ -1,0 +1,69 @@
+import 'package:daily_bazaar_frontend/shared_feature/helper/api_exception.dart';
+import 'package:daily_bazaar_frontend/shared_feature/models/product_model.dart';
+
+class ProductApi {
+  ProductApi(this._client);
+
+  final ApiClient _client;
+
+  /// Get products by category: GET /api/category-products/{categoryId}
+  Future<List<Product>> getProductsByCategory(
+    String categoryId, {
+    int? limit,
+    int? offset,
+  }) async {
+    String path = '/api/category-products/$categoryId';
+
+    final queryParams = <String, String>{};
+    if (limit != null) queryParams['limit'] = limit.toString();
+    if (offset != null) queryParams['offset'] = offset.toString();
+
+    if (queryParams.isNotEmpty) {
+      final query = queryParams.entries
+          .map((e) => '${e.key}=${e.value}')
+          .join('&');
+      path = '$path?$query';
+    }
+
+    final json = await _client.getJsonList(path);
+    return json.map((item) => Product.fromJson(item)).toList();
+  }
+
+  /// Get all products: GET /api/products
+  Future<List<Product>> getAllProducts({
+    List<String>? categoryIds,
+    int? limit,
+    int? offset,
+  }) async {
+    String path = '/api/products';
+
+    final queryParams = <String, String>{};
+    if (categoryIds != null && categoryIds.isNotEmpty) {
+      queryParams['category_ids'] = categoryIds.join(',');
+    }
+    if (limit != null) queryParams['limit'] = limit.toString();
+    if (offset != null) queryParams['offset'] = offset.toString();
+
+    if (queryParams.isNotEmpty) {
+      final query = queryParams.entries
+          .map((e) => '${e.key}=${e.value}')
+          .join('&');
+      path = '$path?$query';
+    }
+
+    final json = await _client.getJsonList(path);
+    return json.map((item) => Product.fromJson(item)).toList();
+  }
+
+  /// Get product by ID: GET /api/products/{id}
+  Future<Product> getProductById(String id) async {
+    final json = await _client.getJson('/api/products/$id');
+    return Product.fromJson(json);
+  }
+
+  /// Search products: GET /api/products/search?q={query}
+  Future<List<Product>> searchProducts(String query) async {
+    final json = await _client.getJsonList('/api/products/search?q=$query');
+    return json.map((item) => Product.fromJson(item)).toList();
+  }
+}

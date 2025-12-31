@@ -1,10 +1,12 @@
 import 'package:daily_bazaar_frontend/screens/Profile/address_screen.dart';
+import 'package:daily_bazaar_frontend/screens/category_browse.dart';
 import 'package:daily_bazaar_frontend/screens/home_page.dart';
 import 'package:daily_bazaar_frontend/screens/Profile/profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:daily_bazaar_frontend/screens/login_page.dart';
 import 'package:daily_bazaar_frontend/screens/register_page.dart';
 import 'package:daily_bazaar_frontend/shared_feature/config/hive.dart';
+import 'package:daily_bazaar_frontend/shared_feature/models/category_model.dart';
 
 /// Centralized route names (avoids stringly-typed navigation spread across app).
 abstract final class Routes {
@@ -14,6 +16,7 @@ abstract final class Routes {
   static const register = '/register';
   static const profile = '/profile';
   static const addresses = '/addresses';
+  static const categoryBrowse = '/category-browse';
 }
 
 /// Centralized router (single place for navigation evolution).
@@ -49,6 +52,12 @@ abstract final class AppRouter {
         return MaterialPageRoute<void>(
           settings: settings,
           builder: (_) => const ProfilePage(),
+        );
+      case Routes.categoryBrowse:
+        final category = settings.arguments as Category;
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) => CategoryBrowsePage(parentCategory: category),
         );
       default:
         return MaterialPageRoute<void>(

@@ -157,8 +157,14 @@ class _HomePageState extends ConsumerState<HomePage> {
               data: (cats) => CategoryGridSection(
                 title: 'Grocery & Kitchen',
                 categories: _mapToItems(cats, fallbackColor: 0xFFE3F2FD),
-                onCategoryTap: (category) {
-                  // TODO: navigate to category products / subcategories
+                onCategoryTap: (categoryItem) {
+                  // Find the original Category from the list
+                  final category = cats.firstWhere(
+                    (c) => c.id == categoryItem.id,
+                  );
+                  Navigator.of(
+                    context,
+                  ).pushNamed(Routes.categoryBrowse, arguments: category);
                 },
               ),
               loading: () =>
