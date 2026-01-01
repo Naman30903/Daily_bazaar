@@ -123,7 +123,7 @@ class _LoadingSkeleton extends StatelessWidget {
           child: ListView.builder(
             padding: const EdgeInsets.symmetric(vertical: 8),
             itemCount: 8,
-            itemBuilder: (_, __) => Padding(
+            itemBuilder: (_, _) => Padding(
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
               child: Column(
                 children: [
@@ -165,7 +165,7 @@ class _LoadingSkeleton extends StatelessWidget {
               crossAxisSpacing: 12,
             ),
             itemCount: 6,
-            itemBuilder: (_, __) => Container(
+            itemBuilder: (_, _) => Container(
               decoration: BoxDecoration(
                 color: cs.surfaceContainerHighest.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(12),
