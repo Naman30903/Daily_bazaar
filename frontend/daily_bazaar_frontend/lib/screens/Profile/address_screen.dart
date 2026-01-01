@@ -1,68 +1,181 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:daily_bazaar_frontend/shared_feature/api/user_api.dart';
 import 'package:daily_bazaar_frontend/shared_feature/helper/api_exception.dart';
 import 'package:daily_bazaar_frontend/shared_feature/models/address_model.dart';
 import 'package:daily_bazaar_frontend/shared_feature/config/config.dart';
 import 'package:daily_bazaar_frontend/shared_feature/config/hive.dart';
 import 'package:daily_bazaar_frontend/shared_feature/widgets/snackbar.dart';
+import 'package:daily_bazaar_frontend/shared_feature/provider/user_provider.dart';
+import 'package:daily_bazaar_frontend/shared_feature/provider/user_provider.dart'
+    as _up;
 
-class AddressesPage extends StatefulWidget {
+class AddressesPage extends ConsumerStatefulWidget {
   const AddressesPage({super.key});
 
   @override
-  State<AddressesPage> createState() => _AddressesPageState();
+  ConsumerState<AddressesPage> createState() => _AddressesPageState();
 }
 
-class _AddressesPageState extends State<AddressesPage> {
-  late final ApiClient _client = ApiClient(baseUrl: AppEnvironment.apiBaseUrl);
-  late final UserApi _userApi = UserApi(_client);
-
-  List<UserAddress>? _addresses;
-  bool _isLoading = true;
-  String? _error;
-
+class _AddressesPageState extends ConsumerState<AddressesPage> {
   @override
-  void initState() {
-    super.initState();
-    _loadAddresses();
-  }
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final profileAsync = ref.watch(userControllerProvider);
 
-  @override
-  void dispose() {
-    _client.close();
-    super.dispose();
-  }
-
-  Future<void> _loadAddresses() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
-    try {
-      final token = TokenStorage.getToken();
-      if (token == null || token.isEmpty) {
-        throw const ApiException('Not authenticated');
-      }
-
-      final list = await _userApi.listAddresses(token);
-      setState(() {
-        _addresses = list;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _isLoading = false;
-      });
-    }
-  }
-
-  InputDecoration _dec(String label, {String? hint, IconData? icon}) {
-    return InputDecoration(
-      labelText: label,
-      hintText: hint,
-      prefixIcon: icon == null ? null : Icon(icon),
+    return profileAsync.when(
+      loading: () => Scaffold(
+        appBar: AppBar(
+          title: const Text('Your addresses'),
+          backgroundColor: cs.surface,
+        ),
+        body: const Center(child: CircularProgressIndicator()),
+        floatingActionButton: FloatingActionButton(
+          onPressed: null,
+          child: const Icon(Icons.add),
+        ),
+      ),
+      error: (e, _) => Scaffold(
+        appBar: AppBar(
+          title: const Text('Your addresses'),
+          backgroundColor: cs.surface,
+        ),
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Error', style: Theme.of(context).textTheme.titleLarge),
+              const SizedBox(height: 8),
+              Text(e.toString(), textAlign: TextAlign.center),
+              const SizedBox(height: 12),
+              ElevatedButton(
+                onPressed: () =>
+                    ref.read(userControllerProvider.notifier).refresh(),
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: null,
+          child: const Icon(Icons.add),
+        ),
+      ),
+      data: (data) => Scaffold(
+        appBar: AppBar(
+          title: const Text('Your addresses'),
+          backgroundColor: cs.surface,
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () => _showAddressSheet(),
+          child: const Icon(Icons.add),
+        ),
+        body: data.addresses.isEmpty
+            ? Center(
+                child: Text(
+                  'No addresses yet',
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+              )
+            : RefreshIndicator(
+                onRefresh: () async =>
+                    ref.read(userControllerProvider.notifier).refresh(),
+                child: ListView.separated(
+                  padding: const EdgeInsets.all(12),
+                  itemCount: data.addresses.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  itemBuilder: (ctx, i) {
+                    final a = data.addresses[i];
+                    return Card(
+                      child: ListTile(
+                        leading: a.isDefault
+                            ? Icon(Icons.check_circle, color: cs.primary)
+                            : Icon(
+                                Icons.location_on_outlined,
+                                color: cs.onSurfaceVariant,
+                              ),
+                        title: Row(
+                          children: [
+                            Expanded(child: Text(a.label ?? a.fullName)),
+                            if (a.isDefault)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: cs.primaryContainer.withValues(
+                                    alpha: 0.45,
+                                  ),
+                                  borderRadius: BorderRadius.circular(999),
+                                  border: Border.all(
+                                    color: cs.outlineVariant.withValues(
+                                      alpha: 0.4,
+                                    ),
+                                  ),
+                                ),
+                                child: Text(
+                                  'Default',
+                                  style: Theme.of(context).textTheme.labelSmall
+                                      ?.copyWith(
+                                        color: cs.primary,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        subtitle: Text(a.formattedAddress),
+                        isThreeLine: true,
+                        trailing: PopupMenuButton<String>(
+                          onSelected: (v) async {
+                            if (v == 'edit') _showAddressSheet(existing: a);
+                            if (v == 'delete') _confirmDelete(a);
+                          },
+                          itemBuilder: (_) => const [
+                            PopupMenuItem(value: 'edit', child: Text('Edit')),
+                            PopupMenuItem(
+                              value: 'delete',
+                              child: Text('Delete'),
+                            ),
+                          ],
+                        ),
+                        onTap: () => _showAddressSheet(existing: a),
+                      ),
+                    );
+                  },
+                ),
+              ),
+      ),
     );
+  }
+
+  Future<void> _confirmDelete(UserAddress addr) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete address'),
+        content: Text('Delete address "${addr.label ?? addr.fullName}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+
+    try {
+      await ref.read(userControllerProvider.notifier).deleteAddress(addr.id);
+      showAppSnackBar(context, 'Address deleted');
+    } catch (e) {
+      showAppSnackBar(context, e.toString());
+    }
   }
 
   Future<void> _showAddressSheet({UserAddress? existing}) async {
@@ -400,12 +513,6 @@ class _AddressesPageState extends State<AddressesPage> {
 
     if (result == null) return;
 
-    final token = TokenStorage.getToken();
-    if (token == null || token.isEmpty) {
-      if (mounted) showAppSnackBar(context, 'Not authenticated');
-      return;
-    }
-
     try {
       if (existing == null) {
         final req = CreateAddressRequest(
@@ -421,7 +528,7 @@ class _AddressesPageState extends State<AddressesPage> {
           state: result.state,
           pincode: result.pincode,
         );
-        await _userApi.createAddress(token, req);
+        await ref.read(userControllerProvider.notifier).createAddress(req);
         if (mounted) showAppSnackBar(context, 'Address added');
       } else {
         final updates = {
@@ -437,10 +544,12 @@ class _AddressesPageState extends State<AddressesPage> {
           'state': result.state,
           'pincode': result.pincode,
         };
-        await _userApi.updateAddress(token, existing.id, updates);
+        await ref
+            .read(userControllerProvider.notifier)
+            .updateAddress(existing.id, updates);
         if (mounted) showAppSnackBar(context, 'Address updated');
       }
-      await _loadAddresses();
+      await ref.read(userControllerProvider.notifier).refresh();
     } catch (e) {
       if (mounted) showAppSnackBar(context, e.toString());
     } finally {
@@ -457,143 +566,11 @@ class _AddressesPageState extends State<AddressesPage> {
     }
   }
 
-  Future<void> _confirmDelete(UserAddress addr) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete address'),
-        content: Text('Delete address "${addr.label ?? addr.fullName}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
-    if (ok != true) return;
-
-    final token = TokenStorage.getToken();
-    if (token == null || token.isEmpty) {
-      showAppSnackBar(context, 'Not authenticated');
-      return;
-    }
-
-    try {
-      await _userApi.deleteAddress(token, addr.id);
-      showAppSnackBar(context, 'Address deleted');
-      await _loadAddresses();
-    } catch (e) {
-      showAppSnackBar(context, e.toString());
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Your addresses'),
-        backgroundColor: cs.surface,
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddressSheet(),
-        child: const Icon(Icons.add),
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-          ? Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text('Error', style: Theme.of(context).textTheme.titleLarge),
-                  const SizedBox(height: 8),
-                  Text(_error ?? '', textAlign: TextAlign.center),
-                  const SizedBox(height: 12),
-                  ElevatedButton(
-                    onPressed: _loadAddresses,
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
-            )
-          : (_addresses == null || _addresses!.isEmpty)
-          ? Center(
-              child: Text(
-                'No addresses yet',
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
-            )
-          : RefreshIndicator(
-              onRefresh: _loadAddresses,
-              child: ListView.separated(
-                padding: const EdgeInsets.all(12),
-                itemCount: _addresses!.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 8),
-                itemBuilder: (ctx, i) {
-                  final a = _addresses![i];
-                  return Card(
-                    child: ListTile(
-                      leading: a.isDefault
-                          ? Icon(Icons.check_circle, color: cs.primary)
-                          : Icon(
-                              Icons.location_on_outlined,
-                              color: cs.onSurfaceVariant,
-                            ),
-                      title: Row(
-                        children: [
-                          Expanded(child: Text(a.label ?? a.fullName)),
-                          if (a.isDefault)
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: cs.primaryContainer.withValues(
-                                  alpha: 0.45,
-                                ),
-                                borderRadius: BorderRadius.circular(999),
-                                border: Border.all(
-                                  color: cs.outlineVariant.withValues(
-                                    alpha: 0.4,
-                                  ),
-                                ),
-                              ),
-                              child: Text(
-                                'Default',
-                                style: Theme.of(context).textTheme.labelSmall
-                                    ?.copyWith(
-                                      color: cs.primary,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                              ),
-                            ),
-                        ],
-                      ),
-                      subtitle: Text(a.formattedAddress),
-                      isThreeLine: true,
-                      trailing: PopupMenuButton<String>(
-                        onSelected: (v) {
-                          if (v == 'edit') _showAddressSheet(existing: a);
-                          if (v == 'delete') _confirmDelete(a);
-                        },
-                        itemBuilder: (_) => const [
-                          PopupMenuItem(value: 'edit', child: Text('Edit')),
-                          PopupMenuItem(value: 'delete', child: Text('Delete')),
-                        ],
-                      ),
-                      onTap: () => _showAddressSheet(existing: a),
-                    ),
-                  );
-                },
-              ),
-            ),
+  InputDecoration _dec(String label, {String? hint, IconData? icon}) {
+    return InputDecoration(
+      labelText: label,
+      hintText: hint,
+      prefixIcon: icon == null ? null : Icon(icon),
     );
   }
 }

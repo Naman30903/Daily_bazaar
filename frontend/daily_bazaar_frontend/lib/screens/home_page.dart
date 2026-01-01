@@ -275,7 +275,7 @@ class _CategorySectionSkeleton extends StatelessWidget {
               childAspectRatio: 0.8,
             ),
             itemCount: 8,
-            itemBuilder: (_, __) => Column(
+            itemBuilder: (_, _) => Column(
               children: [
                 Expanded(
                   child: Container(

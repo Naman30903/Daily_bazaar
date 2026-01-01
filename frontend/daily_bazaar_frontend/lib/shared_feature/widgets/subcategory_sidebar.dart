@@ -132,7 +132,7 @@ class _SubcategoryItem extends StatelessWidget {
                     ? CachedNetworkImage(
                         imageUrl: subcategory.imageUrl!,
                         fit: BoxFit.cover,
-                        placeholder: (_, __) => Center(
+                        placeholder: (_, _) => Center(
                           child: SizedBox(
                             width: 16,
                             height: 16,
@@ -142,7 +142,7 @@ class _SubcategoryItem extends StatelessWidget {
                             ),
                           ),
                         ),
-                        errorWidget: (_, __, ___) => Icon(
+                        errorWidget: (_, _, _) => Icon(
                           Icons.category_outlined,
                           color: isSelected ? cs.primary : cs.onSurfaceVariant,
                           size: 24,
@@ -185,7 +185,7 @@ class _SidebarSkeleton extends StatelessWidget {
     return ListView.builder(
       padding: const EdgeInsets.symmetric(vertical: 8),
       itemCount: 8,
-      itemBuilder: (_, __) => Padding(
+      itemBuilder: (_, _) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
         child: Column(
           children: [

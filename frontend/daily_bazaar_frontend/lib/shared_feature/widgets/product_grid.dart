@@ -218,7 +218,7 @@ class _ProductsGridSkeleton extends StatelessWidget {
         crossAxisSpacing: 12,
       ),
       itemCount: 6,
-      itemBuilder: (_, __) => Container(
+      itemBuilder: (_, _) => Container(
         decoration: BoxDecoration(
           color: cs.surfaceContainerHighest.withValues(alpha: 0.2),
           borderRadius: BorderRadius.circular(12),

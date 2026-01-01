@@ -53,7 +53,7 @@ class ProductCardBrowse extends StatelessWidget {
                           ? CachedNetworkImage(
                               imageUrl: product.primaryImageUrl!,
                               fit: BoxFit.cover,
-                              placeholder: (_, __) => Container(
+                              placeholder: (_, _) => Container(
                                 color: cs.surfaceContainerHighest.withValues(
                                   alpha: 0.3,
                                 ),
@@ -68,7 +68,7 @@ class ProductCardBrowse extends StatelessWidget {
                                   ),
                                 ),
                               ),
-                              errorWidget: (_, __, ___) =>
+                              errorWidget: (_, _, _) =>
                                   _ImagePlaceholder(cs: cs),
                             )
                           : _ImagePlaceholder(cs: cs),
