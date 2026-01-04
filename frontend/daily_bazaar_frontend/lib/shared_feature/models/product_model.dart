@@ -13,6 +13,10 @@ class Product {
     this.images,
     this.variants,
     this.weight,
+    this.rating,
+    this.reviewCount,
+    this.deliveryMinutes,
+    this.mrpCents,
   });
 
   final String id;
@@ -28,10 +32,26 @@ class Product {
   final List<ProductImage>? images;
   final List<ProductVariant>? variants;
   final String? weight;
+  final double? rating;
+  final int? reviewCount;
+  final int? deliveryMinutes;
+  final int? mrpCents;
 
   double get priceInRupees => priceCents / 100;
 
   String get formattedPrice => '₹${priceInRupees.toStringAsFixed(0)}';
+
+  double? get mrpInRupees => mrpCents != null ? mrpCents! / 100 : null;
+
+  String? get formattedMrp =>
+      mrpInRupees != null ? '₹${mrpInRupees!.toStringAsFixed(0)}' : null;
+
+  int? get discountPercent {
+    if (mrpCents == null || mrpCents == 0 || mrpCents! <= priceCents) {
+      return null;
+    }
+    return (((mrpCents! - priceCents) / mrpCents!) * 100).round();
+  }
 
   String? get primaryImageUrl =>
       images?.isNotEmpty == true ? images!.first.url : null;
@@ -65,6 +85,7 @@ class Product {
       rating: (json['rating'] as num?)?.toDouble(),
       reviewCount: (json['review_count'] as num?)?.toInt(),
       deliveryMinutes: (json['delivery_minutes'] as num?)?.toInt(),
+      mrpCents: (json['mrp_cents'] as num?)?.toInt(),
       weight: json['weight']?.toString(),
     );
   }
