@@ -81,7 +81,7 @@ class _ProductImageCarouselState extends State<ProductImageCarousel> {
                   child: Image.network(
                     widget.imageUrls[index],
                     fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => _buildPlaceholder(),
+                    errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
                     loadingBuilder: (context, child, loadingProgress) {
                       if (loadingProgress == null) return child;
                       return Center(

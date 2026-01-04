@@ -140,7 +140,7 @@ class _BrandRow extends StatelessWidget {
                       child: Image.network(
                         brandLogoUrl!,
                         fit: BoxFit.contain,
-                        errorBuilder: (_, __, ___) => _buildLogoPlaceholder(),
+                        errorBuilder: (context, error, stackTrace) => _buildLogoPlaceholder(),
                       ),
                     )
                   : _buildLogoPlaceholder(),

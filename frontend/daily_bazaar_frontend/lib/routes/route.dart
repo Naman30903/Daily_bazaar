@@ -1,12 +1,14 @@
 import 'package:daily_bazaar_frontend/screens/Profile/address_screen.dart';
 import 'package:daily_bazaar_frontend/screens/category_browse.dart';
 import 'package:daily_bazaar_frontend/screens/home_page.dart';
+import 'package:daily_bazaar_frontend/screens/product_detail_screen.dart';
 import 'package:daily_bazaar_frontend/screens/Profile/profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:daily_bazaar_frontend/screens/login_page.dart';
 import 'package:daily_bazaar_frontend/screens/register_page.dart';
 import 'package:daily_bazaar_frontend/shared_feature/config/hive.dart';
 import 'package:daily_bazaar_frontend/shared_feature/models/category_model.dart';
+import 'package:daily_bazaar_frontend/shared_feature/models/product_model.dart';
 
 /// Centralized route names (avoids stringly-typed navigation spread across app).
 abstract final class Routes {
@@ -17,6 +19,7 @@ abstract final class Routes {
   static const profile = '/profile';
   static const addresses = '/addresses';
   static const categoryBrowse = '/category-browse';
+  static const productDetail = '/product-detail';
 }
 
 /// Centralized router (single place for navigation evolution).
@@ -58,6 +61,17 @@ abstract final class AppRouter {
         return MaterialPageRoute<void>(
           settings: settings,
           builder: (_) => CategoryBrowsePage(parentCategory: category),
+        );
+      case Routes.productDetail:
+        final args = settings.arguments as Map<String, dynamic>;
+        final product = args['product'] as Product;
+        final similarProducts = args['similarProducts'] as List<Product>? ?? [];
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) => ProductDetailScreen(
+            product: product,
+            similarProducts: similarProducts,
+          ),
         );
       default:
         return MaterialPageRoute<void>(

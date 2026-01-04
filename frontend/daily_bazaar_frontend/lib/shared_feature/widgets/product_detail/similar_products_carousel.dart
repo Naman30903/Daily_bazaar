@@ -60,7 +60,7 @@ class SimilarProductsCarousel extends StatelessWidget {
                 horizontal: ProductDetailTheme.space16,
               ),
               itemCount: products.length,
-              separatorBuilder: (_, __) => const SizedBox(
+              separatorBuilder: (context, index) => const SizedBox(
                 width: ProductDetailTheme.space12,
               ),
               itemBuilder: (context, index) {
