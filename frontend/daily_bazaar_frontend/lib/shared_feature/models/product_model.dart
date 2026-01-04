@@ -12,9 +12,6 @@ class Product {
     this.categories,
     this.images,
     this.variants,
-    this.rating,
-    this.reviewCount,
-    this.deliveryMinutes,
     this.weight,
   });
 
@@ -30,9 +27,6 @@ class Product {
   final List<ProductCategory>? categories;
   final List<ProductImage>? images;
   final List<ProductVariant>? variants;
-  final double? rating;
-  final int? reviewCount;
-  final int? deliveryMinutes;
   final String? weight;
 
   double get priceInRupees => priceCents / 100;
