@@ -4,7 +4,7 @@ build:
 	go build ./...
 
 run:
-	go run ./cmd/main.go
+	go run ./cmd/server/main.go
 
 tidy:
 	go mod tidy

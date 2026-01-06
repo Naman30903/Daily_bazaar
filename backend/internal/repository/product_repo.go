@@ -154,8 +154,8 @@ func (r *ProductRepository) UnlinkAllProductCategories(productID string) error {
 
 // GetProductByID fetches product WITH categories using JOIN
 func (r *ProductRepository) GetProductByID(id string) (*models.Product, error) {
-	// Supabase REST API: select with embedded categories
-	urlStr := fmt.Sprintf("%s/rest/v1/products?id=eq.%s&select=*,categories:product_categories(category_id,categories(id,name,slug,position))", r.baseURL, id)
+	// Supabase REST API: select with embedded categories and images
+	urlStr := fmt.Sprintf("%s/rest/v1/products?id=eq.%s&select=*,images:product_images(id,url,position),categories:product_categories(category_id,categories(id,name,slug,position))", r.baseURL, id)
 
 	req, err := http.NewRequest(http.MethodGet, urlStr, nil)
 	if err != nil {
@@ -189,7 +189,7 @@ func (r *ProductRepository) GetProductByID(id string) (*models.Product, error) {
 
 // GetAllProducts fetches products WITH optional category filter
 func (r *ProductRepository) GetAllProducts(params *models.ProductSearchParams) ([]models.Product, error) {
-	urlStr := fmt.Sprintf("%s/rest/v1/products?select=*,categories:product_categories(category_id,categories(id,name,slug,position))", r.baseURL)
+	urlStr := fmt.Sprintf("%s/rest/v1/products?select=*,images:product_images(id,url,position),categories:product_categories(category_id,categories(id,name,slug,position))", r.baseURL)
 
 	// Add filters
 	if params != nil {
@@ -202,7 +202,8 @@ func (r *ProductRepository) GetAllProducts(params *models.ProductSearchParams) (
 			// We need to join with product_categories and filter
 			// Supabase syntax: product_categories.category_id.in.(uuid1,uuid2)
 			categoryFilter := strings.Join(params.CategoryIDs, ",")
-			urlStr = fmt.Sprintf("%s/rest/v1/products?select=*,product_categories!inner(category_id,categories(id,name,slug,position))", r.baseURL)
+			// When filtering by categories use inner join and include images
+			urlStr = fmt.Sprintf("%s/rest/v1/products?select=*,images:product_images(id,url,position),product_categories!inner(category_id,categories(id,name,slug,position))", r.baseURL)
 			urlStr += fmt.Sprintf("&product_categories.category_id=in.(%s)", categoryFilter)
 			if params.ActiveOnly {
 				urlStr += "&active=eq.true"
@@ -389,6 +390,25 @@ func (r *ProductRepository) parseProductWithCategories(raw map[string]interface{
 						Position: pos,
 					})
 				}
+			}
+		}
+	}
+
+	// NEW: Parse images embedded by select into Product.Images
+	if imagesRaw, ok := raw["images"].([]interface{}); ok {
+		product.Images = make([]models.ProductImage, 0, len(imagesRaw))
+		for _, img := range imagesRaw {
+			if m, ok := img.(map[string]interface{}); ok {
+				pos := 0
+				if p, ok := m["position"].(float64); ok {
+					pos = int(p)
+				}
+				product.Images = append(product.Images, models.ProductImage{
+					ID:        getString(m, "id"),
+					ProductID: product.ID,
+					URL:       getString(m, "url"),
+					Position:  pos,
+				})
 			}
 		}
 	}
