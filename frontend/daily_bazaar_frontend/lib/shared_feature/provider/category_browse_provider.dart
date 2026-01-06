@@ -85,7 +85,7 @@ class CategoryBrowseController extends _$CategoryBrowseController {
   Timer? _debounce;
 
   // Toggle mock mode quickly while UI building.
-  static const bool _useMock = true;
+  static const bool _useMock = false;
 
   @override
   Future<CategoryBrowseState> build(String parentCategoryId) async {
