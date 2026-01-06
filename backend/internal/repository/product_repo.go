@@ -155,7 +155,7 @@ func (r *ProductRepository) UnlinkAllProductCategories(productID string) error {
 // GetProductByID fetches product WITH categories using JOIN
 func (r *ProductRepository) GetProductByID(id string) (*models.Product, error) {
 	// Supabase REST API: select with embedded categories and images
-	urlStr := fmt.Sprintf("%s/rest/v1/products?id=eq.%s&select=*,images:product_images(id,url,position),categories:product_categories(category_id,categories(id,name,slug,position))", r.baseURL, id)
+	urlStr := fmt.Sprintf("%s/rest/v1/products?id=eq.%s&select=*,images:product_images(id,url,position),categories:product_categories(category_id,categories(id,name,slug,position)),variants:product_variants(*)", r.baseURL, id)
 
 	req, err := http.NewRequest(http.MethodGet, urlStr, nil)
 	if err != nil {
@@ -189,7 +189,7 @@ func (r *ProductRepository) GetProductByID(id string) (*models.Product, error) {
 
 // GetAllProducts fetches products WITH optional category filter
 func (r *ProductRepository) GetAllProducts(params *models.ProductSearchParams) ([]models.Product, error) {
-	urlStr := fmt.Sprintf("%s/rest/v1/products?select=*,images:product_images(id,url,position),categories:product_categories(category_id,categories(id,name,slug,position))", r.baseURL)
+	urlStr := fmt.Sprintf("%s/rest/v1/products?select=*,images:product_images(id,url,position),categories:product_categories(category_id,categories(id,name,slug,position)),variants:product_variants(*)", r.baseURL)
 
 	// Add filters
 	if params != nil {
@@ -202,8 +202,8 @@ func (r *ProductRepository) GetAllProducts(params *models.ProductSearchParams) (
 			// We need to join with product_categories and filter
 			// Supabase syntax: product_categories.category_id.in.(uuid1,uuid2)
 			categoryFilter := strings.Join(params.CategoryIDs, ",")
-			// When filtering by categories use inner join and include images
-			urlStr = fmt.Sprintf("%s/rest/v1/products?select=*,images:product_images(id,url,position),product_categories!inner(category_id,categories(id,name,slug,position))", r.baseURL)
+			// When filtering by categories use inner join and include images and variants
+			urlStr = fmt.Sprintf("%s/rest/v1/products?select=*,images:product_images(id,url,position),categories:product_categories(category_id,categories(id,name,slug,position)),variants:product_variants(*),product_categories!inner(category_id,categories(id,name,slug,position))", r.baseURL)
 			urlStr += fmt.Sprintf("&product_categories.category_id=in.(%s)", categoryFilter)
 			if params.ActiveOnly {
 				urlStr += "&active=eq.true"
@@ -253,7 +253,7 @@ func (r *ProductRepository) GetAllProducts(params *models.ProductSearchParams) (
 // SearchProducts searches by name/description WITH categories
 func (r *ProductRepository) SearchProducts(query string) ([]models.Product, error) {
 	encodedQuery := url.QueryEscape("%" + query + "%")
-	urlStr := fmt.Sprintf("%s/rest/v1/products?or=(name.ilike.%s,description.ilike.%s)&active=eq.true&select=*,categories:product_categories(category_id,categories(id,name,slug,position))&order=created_at.desc",
+	urlStr := fmt.Sprintf("%s/rest/v1/products?or=(name.ilike.%s,description.ilike.%s)&active=eq.true&select=*,categories:product_categories(category_id,categories(id,name,slug,position)),variants:product_variants(*)&order=created_at.desc",
 		r.baseURL, encodedQuery, encodedQuery)
 
 	req, err := http.NewRequest(http.MethodGet, urlStr, nil)
@@ -408,6 +408,21 @@ func (r *ProductRepository) parseProductWithCategories(raw map[string]interface{
 					ProductID: product.ID,
 					URL:       getString(m, "url"),
 					Position:  pos,
+				})
+			}
+		}
+	}
+
+	// NEW: Parse variants embedded by select into Product.Variants
+	if variantsRaw, ok := raw["variants"].([]interface{}); ok {
+		product.Variants = make([]models.ProductVariant, 0, len(variantsRaw))
+		for _, v := range variantsRaw {
+			if m, ok := v.(map[string]interface{}); ok {
+				product.Variants = append(product.Variants, models.ProductVariant{
+					ID:         getString(m, "id"),
+					Name:       getString(m, "name"),
+					PriceCents: getInt64(m, "price_cents"),
+					Weight:     getString(m, "weight"),
 				})
 			}
 		}
