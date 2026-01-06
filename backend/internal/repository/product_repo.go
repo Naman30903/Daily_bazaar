@@ -369,17 +369,24 @@ func (r *ProductRepository) parseProductWithCategories(raw map[string]interface{
 		product.Metadata = metadata
 	}
 
-	// Parse nested categories
+	// Parse nested categories into ProductCategory (used by Product model)
 	if categoriesRaw, ok := raw["categories"].([]interface{}); ok {
-		product.Categories = make([]models.Category, 0, len(categoriesRaw))
+		product.Categories = make([]models.ProductCategory, 0, len(categoriesRaw))
 		for _, catRaw := range categoriesRaw {
 			if catMap, ok := catRaw.(map[string]interface{}); ok {
 				if categoryData, ok := catMap["categories"].(map[string]interface{}); ok {
-					product.Categories = append(product.Categories, models.Category{
+					// Position in ProductCategory is a pointer to int
+					var pos *int
+					if p, ok := categoryData["position"].(float64); ok {
+						pv := int(p)
+						pos = &pv
+					}
+
+					product.Categories = append(product.Categories, models.ProductCategory{
 						ID:       getString(categoryData, "id"),
 						Name:     getString(categoryData, "name"),
 						Slug:     getString(categoryData, "slug"),
-						Position: getInt(categoryData, "position"),
+						Position: pos,
 					})
 				}
 			}
