@@ -46,7 +46,7 @@ class CategoryGridSection extends StatelessWidget {
               crossAxisCount: 4,
               mainAxisSpacing: 8,
               crossAxisSpacing: 8,
-              childAspectRatio: 0.72, // Slightly taller to accommodate text
+              childAspectRatio: 0.68, // Slightly taller to accommodate text
             ),
             itemCount: categories.length > 8 ? 8 : categories.length,
             itemBuilder: (context, index) {
@@ -67,7 +67,9 @@ class CategoryGridSection extends StatelessWidget {
                               ? Color(
                                   category.backgroundColor!,
                                 ).withValues(alpha: 0.12)
-                              : cs.surfaceContainerHighest.withValues(alpha: 0.4),
+                              : cs.surfaceContainerHighest.withValues(
+                                  alpha: 0.4,
+                                ),
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
                             color: cs.outlineVariant.withValues(alpha: 0.25),
@@ -95,7 +97,9 @@ class CategoryGridSection extends StatelessWidget {
                                         width: 16,
                                         child: CircularProgressIndicator(
                                           strokeWidth: 2,
-                                          color: cs.primary.withValues(alpha: 0.6),
+                                          color: cs.primary.withValues(
+                                            alpha: 0.6,
+                                          ),
                                         ),
                                       ),
                                     );
