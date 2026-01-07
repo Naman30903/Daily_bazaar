@@ -38,41 +38,44 @@ class CategoryGridSection extends StatelessWidget {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
           child: GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 4,
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
-              childAspectRatio: 0.8,
+              mainAxisSpacing: 8,
+              crossAxisSpacing: 8,
+              childAspectRatio: 0.72, // Slightly taller to accommodate text
             ),
             itemCount: categories.length > 8 ? 8 : categories.length,
             itemBuilder: (context, index) {
               final category = categories[index];
               final hasImage = category.imageUrl.trim().isNotEmpty;
 
-              return InkWell(
+              return GestureDetector(
                 onTap: () => onCategoryTap?.call(category),
-                borderRadius: BorderRadius.circular(12),
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Expanded(
+                    // Fixed-size image container
+                    AspectRatio(
+                      aspectRatio: 1,
                       child: Container(
                         decoration: BoxDecoration(
                           color: category.backgroundColor != null
                               ? Color(
                                   category.backgroundColor!,
-                                ).withValues(alpha: 0.15)
-                              : cs.primaryContainer.withValues(alpha: 0.3),
-                          borderRadius: BorderRadius.circular(12),
+                                ).withValues(alpha: 0.12)
+                              : cs.surfaceContainerHighest.withValues(alpha: 0.4),
+                          borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: cs.outlineVariant.withValues(alpha: 0.35),
+                            color: cs.outlineVariant.withValues(alpha: 0.25),
+                            width: 1,
                           ),
                         ),
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(13),
                           child: hasImage
                               ? Image.network(
                                   category.imageUrl,
@@ -88,19 +91,11 @@ class CategoryGridSection extends StatelessWidget {
                                     if (progress == null) return child;
                                     return Center(
                                       child: SizedBox(
-                                        height: 18,
-                                        width: 18,
+                                        height: 16,
+                                        width: 16,
                                         child: CircularProgressIndicator(
                                           strokeWidth: 2,
-                                          value:
-                                              progress.expectedTotalBytes ==
-                                                      null ||
-                                                  progress.expectedTotalBytes ==
-                                                      0
-                                              ? null
-                                              : progress.cumulativeBytesLoaded /
-                                                    progress
-                                                        .expectedTotalBytes!,
+                                          color: cs.primary.withValues(alpha: 0.6),
                                         ),
                                       ),
                                     );
@@ -115,14 +110,19 @@ class CategoryGridSection extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 6),
-                    Text(
-                      category.name,
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
+                    // Fixed-height text container for consistency
+                    SizedBox(
+                      height: 32, // Fixed height for 2 lines of text
+                      child: Text(
+                        category.name,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          height: 1.2,
+                        ),
                       ),
                     ),
                   ],
