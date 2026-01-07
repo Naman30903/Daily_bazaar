@@ -185,8 +185,13 @@ class _HomePageState extends ConsumerState<HomePage> {
               data: (cats) => CategoryGridSection(
                 title: 'Snacks & Drinks',
                 categories: _mapToItems(cats, fallbackColor: 0xFFFFE0B2),
-                onCategoryTap: (category) {
-                  // TODO: navigate to category products / subcategories
+                onCategoryTap: (categoryItem) {
+                  final category = cats.firstWhere(
+                    (c) => c.id == categoryItem.id,
+                  );
+                  Navigator.of(
+                    context,
+                  ).pushNamed(Routes.categoryBrowse, arguments: category);
                 },
               ),
               loading: () =>
@@ -207,8 +212,13 @@ class _HomePageState extends ConsumerState<HomePage> {
               data: (cats) => CategoryGridSection(
                 title: 'Personal Care',
                 categories: _mapToItems(cats, fallbackColor: 0xFFE1F5FE),
-                onCategoryTap: (category) {
-                  // TODO: navigate to category products / subcategories
+                onCategoryTap: (categoryItem) {
+                  final category = cats.firstWhere(
+                    (c) => c.id == categoryItem.id,
+                  );
+                  Navigator.of(
+                    context,
+                  ).pushNamed(Routes.categoryBrowse, arguments: category);
                 },
               ),
               loading: () =>
