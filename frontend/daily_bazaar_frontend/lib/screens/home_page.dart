@@ -236,6 +236,11 @@ class _HomePageState extends ConsumerState<HomePage> {
           ],
         ),
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => Navigator.of(context).pushNamed(Routes.checkout),
+        label: const Text('Checkout'),
+        icon: const Icon(Icons.shopping_cart),
+      ),
       bottomNavigationBar: AppBottomNavBar(
         currentIndex: _currentNavIndex,
         onTap: (index) {

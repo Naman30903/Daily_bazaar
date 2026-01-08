@@ -1,5 +1,6 @@
 import 'package:daily_bazaar_frontend/screens/Profile/address_screen.dart';
 import 'package:daily_bazaar_frontend/screens/category_browse.dart';
+import 'package:daily_bazaar_frontend/screens/checkout/checkout_screen.dart';
 import 'package:daily_bazaar_frontend/screens/home_page.dart';
 import 'package:daily_bazaar_frontend/screens/product_detail_screen.dart';
 import 'package:daily_bazaar_frontend/screens/Profile/profile_screen.dart';
@@ -20,6 +21,7 @@ abstract final class Routes {
   static const addresses = '/addresses';
   static const categoryBrowse = '/category-browse';
   static const productDetail = '/product-detail';
+  static const checkout = '/checkout';
 }
 
 /// Centralized router (single place for navigation evolution).
@@ -72,6 +74,11 @@ abstract final class AppRouter {
             product: product,
             similarProducts: similarProducts,
           ),
+        );
+      case Routes.checkout:
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) => const CheckoutScreen(),
         );
       default:
         return MaterialPageRoute<void>(
