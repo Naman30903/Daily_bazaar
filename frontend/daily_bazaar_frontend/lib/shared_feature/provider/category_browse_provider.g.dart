@@ -53,7 +53,7 @@ final class CategoryBrowseControllerProvider
 }
 
 String _$categoryBrowseControllerHash() =>
-    r'166ec7d6249bebb01843fa4f7c75f22b218275a7';
+    r'33689db0e06d6dbedfb316bb145bd8f059a37763';
 
 final class CategoryBrowseControllerFamily extends $Family
     with
