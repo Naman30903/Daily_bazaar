@@ -200,11 +200,11 @@ func (r *ProductRepository) GetAllProducts(params *models.ProductSearchParams) (
 		// NEW: Filter by multiple categories (products that have ANY of these categories)
 		if len(params.CategoryIDs) > 0 {
 			// We need to join with product_categories and filter
-			// Supabase syntax: product_categories.category_id.in.(uuid1,uuid2)
+			// We need to join with product_categories and filter
+			// Use a distinct alias for filtering to avoid conflict with the 'categories' alias
 			categoryFilter := strings.Join(params.CategoryIDs, ",")
-			// When filtering by categories use inner join and include images and variants
-			urlStr = fmt.Sprintf("%s/rest/v1/products?select=*,images:product_images(id,url,position),categories:product_categories(category_id,categories(id,name,slug,position)),variants:product_variants(*),product_categories!inner(category_id,categories(id,name,slug,position))", r.baseURL)
-			urlStr += fmt.Sprintf("&product_categories.category_id=in.(%s)", categoryFilter)
+			urlStr = fmt.Sprintf("%s/rest/v1/products?select=*,images:product_images(id,url,position),categories:product_categories(category_id,categories(id,name,slug,position)),variants:product_variants(*),filtering_categories:product_categories!inner(category_id)", r.baseURL)
+			urlStr += fmt.Sprintf("&filtering_categories.category_id=in.(%s)", categoryFilter)
 			if params.ActiveOnly {
 				urlStr += "&active=eq.true"
 			}
