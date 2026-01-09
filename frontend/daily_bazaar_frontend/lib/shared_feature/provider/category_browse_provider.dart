@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:daily_bazaar_frontend/shared_feature/models/category_model.dart';
-import 'package:daily_bazaar_frontend/shared_feature/models/mock_data.dart';
+
 import 'package:daily_bazaar_frontend/shared_feature/models/product_model.dart';
 import 'package:daily_bazaar_frontend/shared_feature/provider/category_provider.dart';
 import 'package:daily_bazaar_frontend/shared_feature/provider/product_provider.dart';
@@ -85,32 +85,9 @@ class CategoryBrowseController extends _$CategoryBrowseController {
   Timer? _debounce;
 
   // Toggle mock mode quickly while UI building.
-  static const bool _useMock = false;
-
   @override
   Future<CategoryBrowseState> build(String parentCategoryId) async {
     ref.onDispose(() => _debounce?.cancel());
-
-    if (_useMock) {
-      final subcats = MockCategoryBrowseData.subcategories;
-      final selected = subcats.isNotEmpty ? subcats.first.id : null;
-      final products = selected == null
-          ? <Product>[]
-          : (MockCategoryBrowseData.productsBySubcategoryId[selected] ??
-                const <Product>[]);
-
-      _productsCache.clear();
-      if (selected != null) {
-        _productsCache[selected] = products;
-      }
-
-      return CategoryBrowseState(
-        subcategories: subcats,
-        selectedSubcategoryId: selected,
-        products: products,
-        hasMoreProducts: false,
-      );
-    }
 
     // load subcategories
     final subcats = await _loadSubcategories(parentCategoryId);
@@ -134,7 +111,6 @@ class CategoryBrowseController extends _$CategoryBrowseController {
   }
 
   Future<List<Category>> _loadSubcategories(String parentId) async {
-    if (_useMock) return MockCategoryBrowseData.subcategories;
     final api = ref.read(categoryApiProvider);
     return api.getSubcategories(parentId);
   }
@@ -143,19 +119,6 @@ class CategoryBrowseController extends _$CategoryBrowseController {
     String categoryId, {
     int offset = 0,
   }) async {
-    if (_useMock) {
-      // mimic pagination in mock mode
-      final all =
-          MockCategoryBrowseData.productsBySubcategoryId[categoryId] ??
-          const <Product>[];
-      final start = offset;
-      final end = (offset + _pageSize) > all.length
-          ? all.length
-          : (offset + _pageSize);
-      if (start >= all.length) return const <Product>[];
-      return all.sublist(start, end);
-    }
-
     final api = ref.read(productApiProvider);
     return api.getProductsByCategory(
       categoryId,

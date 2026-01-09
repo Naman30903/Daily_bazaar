@@ -73,10 +73,10 @@ class CheckoutController extends _$CheckoutController {
   @override
   CheckoutState build() {
     return CheckoutState(
-      cartItems: _getMockCartItems(),
+      cartItems: [],
       deliveryInstructions: _getInitialDeliveryInstructions(),
-      deliveryAddress: _getMockAddress(),
-      billDetails: _calculateBillDetails(_getMockCartItems()),
+      deliveryAddress: null,
+      billDetails: _calculateBillDetails([]),
     );
   }
 
@@ -182,117 +182,6 @@ class CheckoutController extends _$CheckoutController {
     );
   }
 
-  /// Get mock cart items matching the screenshot
-  static List<CartItem> _getMockCartItems() {
-    return [
-      CartItem(
-        id: 'cart-1',
-        product: Product(
-          id: 'prod-1',
-          name: 'Kissan Tomato Ketchup',
-          priceCents: 9300,
-          mrpCents: 9300,
-          stock: 100,
-          active: true,
-          weight: '850 g',
-        ),
-        quantity: 1,
-        priceCentsSnapshot: 9300,
-        mrpCentsSnapshot: 9300,
-      ),
-      CartItem(
-        id: 'cart-2',
-        product: Product(
-          id: 'prod-2',
-          name: 'Dr. Oetker FunFoods Veg Mayonnaise Original',
-          priceCents: 4600,
-          mrpCents: 4600,
-          stock: 100,
-          active: true,
-          weight: '100 g',
-        ),
-        quantity: 1,
-        priceCentsSnapshot: 4600,
-        mrpCentsSnapshot: 4600,
-      ),
-      CartItem(
-        id: 'cart-3',
-        product: Product(
-          id: 'prod-3',
-          name: 'Harvest Gold White Bread',
-          priceCents: 6000,
-          mrpCents: 6000,
-          stock: 100,
-          active: true,
-          weight: '700 g',
-        ),
-        quantity: 1,
-        priceCentsSnapshot: 6000,
-        mrpCentsSnapshot: 6000,
-      ),
-      CartItem(
-        id: 'cart-4',
-        product: Product(
-          id: 'prod-4',
-          name: 'Kissan Mixed Fruit Jam (200 g)',
-          priceCents: 8000,
-          mrpCents: 8000,
-          stock: 100,
-          active: true,
-          weight: '200 g',
-        ),
-        quantity: 1,
-        priceCentsSnapshot: 8000,
-        mrpCentsSnapshot: 8000,
-      ),
-      CartItem(
-        id: 'cart-5',
-        product: Product(
-          id: 'prod-5',
-          name: "Ching's Secret Green Chilli Sauce",
-          priceCents: 5000,
-          mrpCents: 5600,
-          stock: 100,
-          active: true,
-          weight: '190 g',
-        ),
-        quantity: 1,
-        priceCentsSnapshot: 5000,
-        mrpCentsSnapshot: 5600,
-      ),
-      CartItem(
-        id: 'cart-6',
-        product: Product(
-          id: 'prod-6',
-          name: 'Amul Salted Butter',
-          priceCents: 5800,
-          mrpCents: 5800,
-          stock: 100,
-          active: true,
-          weight: '100 g',
-        ),
-        quantity: 1,
-        priceCentsSnapshot: 5800,
-        mrpCentsSnapshot: 5800,
-      ),
-      CartItem(
-        id: 'cart-7',
-        product: Product(
-          id: 'prod-7',
-          name: 'Rajdhani Besan',
-          priceCents: 5900,
-          mrpCents: 8100,
-          stock: 100,
-          active: true,
-          weight: '500 g',
-        ),
-        quantity: 1,
-        priceCentsSnapshot: 5900,
-        mrpCentsSnapshot: 8100,
-      ),
-    ];
-  }
-
   /// Get initial delivery instructions (all disabled)
   static List<DeliveryInstruction> _getInitialDeliveryInstructions() {
     return [
@@ -312,21 +201,5 @@ class CheckoutController extends _$CheckoutController {
         enabled: false,
       ),
     ];
-  }
-
-  /// Get mock delivery address
-  static UserAddress _getMockAddress() {
-    return const UserAddress(
-      id: 'addr-1',
-      userId: 'user-1',
-      label: 'Home',
-      fullName: 'Naman Jain',
-      phone: '+919876543210',
-      addressLine1: 'Vaishnav pg Milan boys hostel',
-      city: 'The gra...',
-      state: 'Maharashtra',
-      pincode: '400001',
-      isDefault: true,
-    );
   }
 }
