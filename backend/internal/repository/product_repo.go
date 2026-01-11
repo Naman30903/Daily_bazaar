@@ -189,7 +189,17 @@ func (r *ProductRepository) GetProductByID(id string) (*models.Product, error) {
 
 // GetAllProducts fetches products WITH optional category filter
 func (r *ProductRepository) GetAllProducts(params *models.ProductSearchParams) ([]models.Product, error) {
-	urlStr := fmt.Sprintf("%s/rest/v1/products?select=*,images:product_images(id,url,position),categories:product_categories(category_id,categories(id,name,slug,position)),variants:product_variants(*)", r.baseURL)
+	// Standard select fields
+	selectFields := "*,images:product_images(id,url,position),variants:product_variants(*)"
+
+	// Join with product_categories and nested categories
+	// We use !inner when filtering by category to force a match
+	categoryJoin := "categories:product_categories(category_id,categories(id,name,slug,position))"
+	if params != nil && len(params.CategoryIDs) > 0 {
+		categoryJoin = "categories:product_categories!inner(category_id,categories(id,name,slug,position))"
+	}
+
+	urlStr := fmt.Sprintf("%s/rest/v1/products?select=%s,%s", r.baseURL, selectFields, categoryJoin)
 
 	// Add filters
 	if params != nil {
@@ -197,17 +207,9 @@ func (r *ProductRepository) GetAllProducts(params *models.ProductSearchParams) (
 			urlStr += "&active=eq.true"
 		}
 
-		// NEW: Filter by multiple categories (products that have ANY of these categories)
 		if len(params.CategoryIDs) > 0 {
-			// We need to join with product_categories and filter
-			// We need to join with product_categories and filter
-			// Use a distinct alias for filtering to avoid conflict with the 'categories' alias
 			categoryFilter := strings.Join(params.CategoryIDs, ",")
-			urlStr = fmt.Sprintf("%s/rest/v1/products?select=*,images:product_images(id,url,position),categories:product_categories(category_id,categories(id,name,slug,position)),variants:product_variants(*),filtering_categories:product_categories!inner(category_id)", r.baseURL)
-			urlStr += fmt.Sprintf("&filtering_categories.category_id=in.(%s)", categoryFilter)
-			if params.ActiveOnly {
-				urlStr += "&active=eq.true"
-			}
+			urlStr += fmt.Sprintf("&categories.category_id=in.(%s)", categoryFilter)
 		}
 
 		if params.Limit > 0 {
@@ -219,6 +221,8 @@ func (r *ProductRepository) GetAllProducts(params *models.ProductSearchParams) (
 	}
 
 	urlStr += "&order=created_at.desc"
+
+	fmt.Printf("[DEBUG] GetAllProducts URL: %s\n", urlStr)
 
 	req, err := http.NewRequest(http.MethodGet, urlStr, nil)
 	if err != nil {
@@ -326,6 +330,84 @@ func (r *ProductRepository) UpdateProduct(id string, updates map[string]interfac
 
 	// Re-fetch to get categories
 	return r.GetProductByID(id)
+}
+
+// GetProductsByCategorySQL fetches products using raw SQL via RPC
+func (r *ProductRepository) GetProductsByCategorySQL(categoryID string, limit, offset int) ([]models.Product, error) {
+	urlStr := fmt.Sprintf("%s/rest/v1/rpc/get_products_by_category", r.baseURL)
+
+	// Build request body for RPC call
+	requestBody := map[string]interface{}{
+		"p_category_id": categoryID,
+		"p_limit":       limit,
+		"p_offset":      offset,
+	}
+
+	body, err := json.Marshal(requestBody)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, urlStr, bytes.NewBuffer(body))
+	if err != nil {
+		return nil, err
+	}
+
+	r.setHeaders(req)
+
+	resp, err := r.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	respBody, _ := io.ReadAll(resp.Body)
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("RPC call failed: status %d, body: %s", resp.StatusCode, string(respBody))
+	}
+
+	// Parse the RPC response
+	var rpcResults []struct {
+		CategoryID         string    `json:"category_id"`
+		CategoryName       string    `json:"category_name"`
+		ProductID          string    `json:"product_id"`
+		ProductName        string    `json:"product_name"`
+		ProductDescription string    `json:"product_description"`
+		ProductSKU         string    `json:"product_sku"`
+		PriceCents         int64     `json:"price_cents"`
+		Stock              int       `json:"stock"`
+		Active             bool      `json:"active"`
+		CreatedAt          time.Time `json:"created_at"`
+	}
+
+	if err := json.Unmarshal(respBody, &rpcResults); err != nil {
+		return nil, fmt.Errorf("failed to parse RPC response: %v", err)
+	}
+
+	// Convert to Product models
+	products := make([]models.Product, 0, len(rpcResults))
+	for _, row := range rpcResults {
+		product := models.Product{
+			ID:          row.ProductID,
+			Name:        row.ProductName,
+			Description: row.ProductDescription,
+			SKU:         row.ProductSKU,
+			PriceCents:  row.PriceCents,
+			Stock:       row.Stock,
+			Active:      row.Active,
+			CreatedAt:   row.CreatedAt,
+			Categories: []models.ProductCategory{
+				{
+					ID:   row.CategoryID,
+					Name: row.CategoryName,
+				},
+			},
+		}
+		products = append(products, product)
+	}
+
+	return products, nil
 }
 
 // DeleteProduct deletes product (cascade will remove product_categories)

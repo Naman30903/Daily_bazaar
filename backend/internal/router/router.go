@@ -47,6 +47,9 @@ func SetupRoutes(
 	// ✅ FIX: avoid ambiguous /api/categories/{categoryId}/products
 	mux.HandleFunc("GET /api/category-products/{categoryId}", productHandler.GetProductsByCategory)
 
+	// ✅ NEW: SQL-based category products endpoint using RPC
+	mux.HandleFunc("GET /api/category-products-sql/{categoryId}", productHandler.GetProductsByCategorySQL)
+
 	// Product routes (admin only)
 	mux.Handle("POST /api/products", authMiddleware.Authenticate(adminMiddleware.RequireAdmin(http.HandlerFunc(productHandler.CreateProduct))))
 	mux.Handle("PUT /api/products/{id}", authMiddleware.Authenticate(adminMiddleware.RequireAdmin(http.HandlerFunc(productHandler.UpdateProduct))))

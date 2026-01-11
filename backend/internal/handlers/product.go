@@ -88,7 +88,52 @@ func (h *ProductHandler) GetProductsByCategory(w http.ResponseWriter, r *http.Re
 		ActiveOnly:  true,
 	}
 
+	// Parse pagination parameters
+	if limit := r.URL.Query().Get("limit"); limit != "" {
+		if l, err := strconv.Atoi(limit); err == nil {
+			params.Limit = l
+		}
+	}
+	if offset := r.URL.Query().Get("offset"); offset != "" {
+		if o, err := strconv.Atoi(offset); err == nil {
+			params.Offset = o
+		}
+	}
+
 	products, err := h.productService.GetAllProducts(params)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(products)
+}
+
+// GetProductsByCategorySQL handles GET /api/category-products-sql/{categoryId}
+// Uses raw SQL via Supabase RPC for better query control
+func (h *ProductHandler) GetProductsByCategorySQL(w http.ResponseWriter, r *http.Request) {
+	categoryID := r.PathValue("categoryId")
+	if categoryID == "" {
+		http.Error(w, "Category ID is required", http.StatusBadRequest)
+		return
+	}
+
+	// Parse pagination parameters
+	limit := 10
+	offset := 0
+	if l := r.URL.Query().Get("limit"); l != "" {
+		if parsed, err := strconv.Atoi(l); err == nil {
+			limit = parsed
+		}
+	}
+	if o := r.URL.Query().Get("offset"); o != "" {
+		if parsed, err := strconv.Atoi(o); err == nil {
+			offset = parsed
+		}
+	}
+
+	products, err := h.productService.GetProductsByCategorySQL(categoryID, limit, offset)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

@@ -142,6 +142,17 @@ func (s *ProductService) GetAllProducts(params *models.ProductSearchParams) ([]m
 	return s.productRepo.GetAllProducts(params)
 }
 
+// GetProductsByCategorySQL uses raw SQL via RPC to get products by category
+func (s *ProductService) GetProductsByCategorySQL(categoryID string, limit, offset int) ([]models.Product, error) {
+	if categoryID == "" {
+		return nil, errors.New("category ID is required")
+	}
+	if limit <= 0 {
+		limit = 10 // default limit
+	}
+	return s.productRepo.GetProductsByCategorySQL(categoryID, limit, offset)
+}
+
 func (s *ProductService) GetProductByID(id string) (*models.Product, error) {
 	if id == "" {
 		return nil, errors.New("product ID is required")
