@@ -1,3 +1,4 @@
+import 'package:daily_bazaar_frontend/screens/product_detail_screen.dart';
 import 'package:daily_bazaar_frontend/shared_feature/widgets/product_grid.dart';
 import 'package:daily_bazaar_frontend/shared_feature/widgets/subcategory_sidebar.dart';
 import 'package:flutter/material.dart';
@@ -89,6 +90,19 @@ class CategoryBrowsePage extends ConsumerWidget {
                     SnackBar(
                       content: Text('${product.name} added to cart'),
                       duration: const Duration(seconds: 2),
+                    ),
+                  );
+                },
+                onProductTap: (product) {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ProductDetailScreen(
+                        product: product,
+                        similarProducts: state.products
+                            .where((p) => p.id != product.id)
+                            .take(5)
+                            .toList(),
+                      ),
                     ),
                   );
                 },

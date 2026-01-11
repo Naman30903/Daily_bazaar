@@ -13,6 +13,7 @@ class ProductGrid extends StatefulWidget {
     required this.onLoadMore,
     required this.onRefresh,
     required this.onAddToCart,
+    required this.onProductTap,
   });
 
   final List<Product> products;
@@ -22,6 +23,7 @@ class ProductGrid extends StatefulWidget {
   final VoidCallback onLoadMore;
   final Future<void> Function() onRefresh;
   final ValueChanged<Product> onAddToCart;
+  final ValueChanged<Product> onProductTap;
 
   @override
   State<ProductGrid> createState() => _ProductGridState();
@@ -109,9 +111,7 @@ class _ProductGridState extends State<ProductGrid> {
                 final product = widget.products[index];
                 return ProductCardBrowse(
                   product: product,
-                  onTap: () {
-                    // TODO: Navigate to product detail
-                  },
+                  onTap: () => widget.onProductTap(product),
                   onAddToCart: () => widget.onAddToCart(product),
                 );
               }, childCount: widget.products.length),
