@@ -6,13 +6,15 @@ class ProductApi {
 
   final ApiClient _client;
 
-  /// Get products by category: GET /api/category-products/{categoryId}
+  /// Get products by category using SQL RPC: GET /api/category-products-sql/{categoryId}
+  /// Returns full product data including images, variants, and categories
   Future<List<Product>> getProductsByCategory(
     String categoryId, {
     int? limit,
     int? offset,
   }) async {
-    String path = '/api/category-products/$categoryId';
+    // Use the SQL-based endpoint for full product data
+    String path = '/api/category-products-sql/$categoryId';
 
     final queryParams = <String, String>{};
     if (limit != null) queryParams['limit'] = limit.toString();

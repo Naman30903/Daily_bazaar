@@ -333,6 +333,7 @@ func (r *ProductRepository) UpdateProduct(id string, updates map[string]interfac
 }
 
 // GetProductsByCategorySQL fetches products using raw SQL via RPC
+// Returns full product data including categories, images, and variants
 func (r *ProductRepository) GetProductsByCategorySQL(categoryID string, limit, offset int) ([]models.Product, error) {
 	urlStr := fmt.Sprintf("%s/rest/v1/rpc/get_products_by_category", r.baseURL)
 
@@ -367,18 +368,36 @@ func (r *ProductRepository) GetProductsByCategorySQL(categoryID string, limit, o
 		return nil, fmt.Errorf("RPC call failed: status %d, body: %s", resp.StatusCode, string(respBody))
 	}
 
-	// Parse the RPC response
+	// Parse the RPC response with full JSON fields
 	var rpcResults []struct {
-		CategoryID         string    `json:"category_id"`
-		CategoryName       string    `json:"category_name"`
-		ProductID          string    `json:"product_id"`
-		ProductName        string    `json:"product_name"`
-		ProductDescription string    `json:"product_description"`
-		ProductSKU         string    `json:"product_sku"`
-		PriceCents         int64     `json:"price_cents"`
-		Stock              int       `json:"stock"`
-		Active             bool      `json:"active"`
-		CreatedAt          time.Time `json:"created_at"`
+		ID          string                 `json:"id"`
+		Name        string                 `json:"name"`
+		Description string                 `json:"description"`
+		SKU         string                 `json:"sku"`
+		PriceCents  int64                  `json:"price_cents"`
+		Stock       int                    `json:"stock"`
+		Active      bool                   `json:"active"`
+		CreatedAt   time.Time              `json:"created_at"`
+		Metadata    map[string]interface{} `json:"metadata"`
+		Weight      string                 `json:"weight"`
+		Categories  []struct {
+			ID       string `json:"id"`
+			Name     string `json:"name"`
+			Slug     string `json:"slug"`
+			Position *int   `json:"position"`
+		} `json:"categories"`
+		Images []struct {
+			ID        string `json:"id"`
+			ProductID string `json:"product_id"`
+			URL       string `json:"url"`
+			Position  int    `json:"position"`
+		} `json:"images"`
+		Variants []struct {
+			ID         string `json:"id"`
+			Name       string `json:"name"`
+			PriceCents int64  `json:"price_cents"`
+			Weight     string `json:"weight"`
+		} `json:"variants"`
 	}
 
 	if err := json.Unmarshal(respBody, &rpcResults); err != nil {
@@ -389,21 +408,51 @@ func (r *ProductRepository) GetProductsByCategorySQL(categoryID string, limit, o
 	products := make([]models.Product, 0, len(rpcResults))
 	for _, row := range rpcResults {
 		product := models.Product{
-			ID:          row.ProductID,
-			Name:        row.ProductName,
-			Description: row.ProductDescription,
-			SKU:         row.ProductSKU,
+			ID:          row.ID,
+			Name:        row.Name,
+			Description: row.Description,
+			SKU:         row.SKU,
 			PriceCents:  row.PriceCents,
 			Stock:       row.Stock,
 			Active:      row.Active,
 			CreatedAt:   row.CreatedAt,
-			Categories: []models.ProductCategory{
-				{
-					ID:   row.CategoryID,
-					Name: row.CategoryName,
-				},
-			},
+			Metadata:    row.Metadata,
+			Weight:      row.Weight,
 		}
+
+		// Convert categories
+		product.Categories = make([]models.ProductCategory, 0, len(row.Categories))
+		for _, cat := range row.Categories {
+			product.Categories = append(product.Categories, models.ProductCategory{
+				ID:       cat.ID,
+				Name:     cat.Name,
+				Slug:     cat.Slug,
+				Position: cat.Position,
+			})
+		}
+
+		// Convert images
+		product.Images = make([]models.ProductImage, 0, len(row.Images))
+		for _, img := range row.Images {
+			product.Images = append(product.Images, models.ProductImage{
+				ID:        img.ID,
+				ProductID: img.ProductID,
+				URL:       img.URL,
+				Position:  img.Position,
+			})
+		}
+
+		// Convert variants
+		product.Variants = make([]models.ProductVariant, 0, len(row.Variants))
+		for _, v := range row.Variants {
+			product.Variants = append(product.Variants, models.ProductVariant{
+				ID:         v.ID,
+				Name:       v.Name,
+				PriceCents: v.PriceCents,
+				Weight:     v.Weight,
+			})
+		}
+
 		products = append(products, product)
 	}
 
