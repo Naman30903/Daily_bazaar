@@ -1,6 +1,6 @@
 import 'package:daily_bazaar_frontend/shared_feature/models/address_model.dart';
 import 'package:daily_bazaar_frontend/shared_feature/models/checkout_models.dart';
-import 'package:daily_bazaar_frontend/shared_feature/models/product_model.dart';
+import 'package:daily_bazaar_frontend/shared_feature/provider/cart_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'checkout_provider.g.dart';
@@ -72,11 +72,15 @@ class CheckoutController extends _$CheckoutController {
 
   @override
   CheckoutState build() {
+    // Watch cart state and sync cart items
+    final cartState = ref.watch(cartControllerProvider);
+    final cartItems = cartState.cartItems;
+
     return CheckoutState(
-      cartItems: [],
+      cartItems: cartItems,
       deliveryInstructions: _getInitialDeliveryInstructions(),
       deliveryAddress: null,
-      billDetails: _calculateBillDetails([]),
+      billDetails: _calculateBillDetails(cartItems),
     );
   }
 
@@ -119,8 +123,9 @@ class CheckoutController extends _$CheckoutController {
   /// Remove item from cart
   void removeItem(String cartItemId) {
     final current = state;
-    final updatedItems =
-        current.cartItems.where((item) => item.id != cartItemId).toList();
+    final updatedItems = current.cartItems
+        .where((item) => item.id != cartItemId)
+        .toList();
 
     final newBillDetails = _calculateBillDetails(updatedItems);
 
@@ -170,8 +175,8 @@ class CheckoutController extends _$CheckoutController {
     // Determine surge charge
     final int? surgeChargeCents =
         itemsTotalCents >= _surgeChargeWaiverThresholdCents
-            ? null
-            : _surgeChargeCents;
+        ? null
+        : _surgeChargeCents;
 
     return BillDetails(
       itemsTotalCents: itemsTotalCents,

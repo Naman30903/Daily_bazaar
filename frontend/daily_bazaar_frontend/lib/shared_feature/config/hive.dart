@@ -9,7 +9,7 @@ class TokenStorage {
   static Future<void> init() async {
     await Hive.initFlutter();
     await Hive.openBox<String>(_boxName);
-    await Hive.openBox<Map>(_cartBoxName);
+    await Hive.openBox<String>(_cartBoxName);
   }
 
   static Future<void> saveToken(String token) async {

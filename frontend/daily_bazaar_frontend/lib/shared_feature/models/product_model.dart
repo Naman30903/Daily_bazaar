@@ -100,6 +100,44 @@ class Product {
     'active': active,
     if (createdAt != null) 'created_at': createdAt!.toIso8601String(),
     if (metadata != null) 'metadata': metadata,
+    if (categories != null)
+      'categories': categories!
+          .map(
+            (c) => {
+              'id': c.id,
+              'name': c.name,
+              'slug': c.slug,
+              if (c.position != null) 'position': c.position,
+            },
+          )
+          .toList(),
+    if (images != null)
+      'images': images!
+          .map(
+            (i) => {
+              'id': i.id,
+              'product_id': i.productId,
+              'url': i.url,
+              if (i.position != null) 'position': i.position,
+            },
+          )
+          .toList(),
+    if (variants != null)
+      'variants': variants!
+          .map(
+            (v) => {
+              'id': v.id,
+              'name': v.name,
+              'price_cents': v.priceCents,
+              if (v.weight != null) 'weight': v.weight,
+            },
+          )
+          .toList(),
+    if (weight != null) 'weight': weight,
+    if (rating != null) 'rating': rating,
+    if (reviewCount != null) 'review_count': reviewCount,
+    if (deliveryMinutes != null) 'delivery_minutes': deliveryMinutes,
+    if (mrpCents != null) 'mrp_cents': mrpCents,
   };
 }
 

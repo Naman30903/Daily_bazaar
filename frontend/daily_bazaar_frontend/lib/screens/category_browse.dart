@@ -89,7 +89,7 @@ class CategoryBrowsePage extends ConsumerWidget {
                       .refreshProducts();
                 },
                 onAddToCart: (product) {
-                  cartController.addToCart(product.id);
+                  cartController.addToCart(product);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('${product.name} added to cart'),
