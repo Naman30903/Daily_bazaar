@@ -14,6 +14,9 @@ class ProductGrid extends StatefulWidget {
     required this.onRefresh,
     required this.onAddToCart,
     required this.onProductTap,
+    this.getCartQuantity,
+    this.onIncrementCart,
+    this.onDecrementCart,
   });
 
   final List<Product> products;
@@ -24,6 +27,15 @@ class ProductGrid extends StatefulWidget {
   final Future<void> Function() onRefresh;
   final ValueChanged<Product> onAddToCart;
   final ValueChanged<Product> onProductTap;
+
+  /// Get current cart quantity for a product (returns 0 if not in cart)
+  final int Function(String productId)? getCartQuantity;
+
+  /// Callback when + is tapped on quantity stepper
+  final ValueChanged<Product>? onIncrementCart;
+
+  /// Callback when - is tapped on quantity stepper
+  final ValueChanged<Product>? onDecrementCart;
 
   @override
   State<ProductGrid> createState() => _ProductGridState();
@@ -109,10 +121,18 @@ class _ProductGridState extends State<ProductGrid> {
               ),
               delegate: SliverChildBuilderDelegate((context, index) {
                 final product = widget.products[index];
+                final cartQty = widget.getCartQuantity?.call(product.id) ?? 0;
                 return ProductCardBrowse(
                   product: product,
                   onTap: () => widget.onProductTap(product),
                   onAddToCart: () => widget.onAddToCart(product),
+                  cartQuantity: cartQty,
+                  onIncrement: widget.onIncrementCart != null
+                      ? () => widget.onIncrementCart!(product)
+                      : null,
+                  onDecrement: widget.onDecrementCart != null
+                      ? () => widget.onDecrementCart!(product)
+                      : null,
                 );
               }, childCount: widget.products.length),
             ),

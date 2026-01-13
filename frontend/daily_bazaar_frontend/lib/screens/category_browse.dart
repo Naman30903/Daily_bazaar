@@ -1,4 +1,5 @@
 import 'package:daily_bazaar_frontend/screens/product_detail_screen.dart';
+import 'package:daily_bazaar_frontend/shared_feature/provider/cart_provider.dart';
 import 'package:daily_bazaar_frontend/shared_feature/widgets/product_grid.dart';
 import 'package:daily_bazaar_frontend/shared_feature/widgets/subcategory_sidebar.dart';
 import 'package:flutter/material.dart';
@@ -16,6 +17,8 @@ class CategoryBrowsePage extends ConsumerWidget {
     final browseState = ref.watch(
       categoryBrowseControllerProvider(parentCategory.id),
     );
+    final cartState = ref.watch(cartControllerProvider);
+    final cartController = ref.read(cartControllerProvider.notifier);
     final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
@@ -86,6 +89,7 @@ class CategoryBrowsePage extends ConsumerWidget {
                       .refreshProducts();
                 },
                 onAddToCart: (product) {
+                  cartController.addToCart(product.id);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('${product.name} added to cart'),
@@ -93,6 +97,12 @@ class CategoryBrowsePage extends ConsumerWidget {
                     ),
                   );
                 },
+                getCartQuantity: (productId) =>
+                    cartState.getQuantity(productId),
+                onIncrementCart: (product) =>
+                    cartController.incrementQuantity(product.id),
+                onDecrementCart: (product) =>
+                    cartController.decrementQuantity(product.id),
                 onProductTap: (product) {
                   Navigator.of(context).push(
                     MaterialPageRoute(

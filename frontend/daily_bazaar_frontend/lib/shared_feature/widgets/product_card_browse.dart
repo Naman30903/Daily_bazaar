@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:daily_bazaar_frontend/shared_feature/models/product_model.dart';
+import 'package:daily_bazaar_frontend/shared_feature/widgets/checkout/quantity_stepper.dart';
 
 class ProductCardBrowse extends StatelessWidget {
   const ProductCardBrowse({
@@ -8,11 +9,17 @@ class ProductCardBrowse extends StatelessWidget {
     required this.product,
     this.onTap,
     this.onAddToCart,
+    this.cartQuantity = 0,
+    this.onIncrement,
+    this.onDecrement,
   });
 
   final Product product;
   final VoidCallback? onTap;
   final VoidCallback? onAddToCart;
+  final int cartQuantity;
+  final VoidCallback? onIncrement;
+  final VoidCallback? onDecrement;
 
   @override
   Widget build(BuildContext context) {
@@ -221,11 +228,14 @@ class ProductCardBrowse extends StatelessWidget {
                           style: Theme.of(context).textTheme.titleSmall
                               ?.copyWith(fontWeight: FontWeight.bold),
                         ),
-                        // Add button
-                        _AddButton(
+                        // Cart add button or quantity stepper
+                        _CartAddButton(
+                          cartQuantity: cartQuantity,
                           hasVariants: product.hasVariants,
                           variantCount: product.variantCount,
-                          onTap: onAddToCart,
+                          onAdd: onAddToCart,
+                          onIncrement: onIncrement,
+                          onDecrement: onDecrement,
                         ),
                       ],
                     ),
@@ -269,23 +279,41 @@ class _ImagePlaceholder extends StatelessWidget {
   }
 }
 
-class _AddButton extends StatelessWidget {
-  const _AddButton({
+/// Cart-aware add button that shows quantity stepper when item is in cart
+class _CartAddButton extends StatelessWidget {
+  const _CartAddButton({
+    required this.cartQuantity,
     required this.hasVariants,
     required this.variantCount,
-    this.onTap,
+    this.onAdd,
+    this.onIncrement,
+    this.onDecrement,
   });
 
+  final int cartQuantity;
   final bool hasVariants;
   final int variantCount;
-  final VoidCallback? onTap;
+  final VoidCallback? onAdd;
+  final VoidCallback? onIncrement;
+  final VoidCallback? onDecrement;
 
   @override
   Widget build(BuildContext context) {
+    // If item is in cart, show quantity stepper
+    if (cartQuantity > 0) {
+      return QuantityStepper(
+        quantity: cartQuantity,
+        minQuantity: 0, // Allow decrementing to 0 which removes item
+        onIncrement: onIncrement ?? () {},
+        onDecrement: onDecrement ?? () {},
+      );
+    }
+
+    // Otherwise show ADD button
     final cs = Theme.of(context).colorScheme;
 
     return InkWell(
-      onTap: onTap,
+      onTap: onAdd,
       borderRadius: BorderRadius.circular(8),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
