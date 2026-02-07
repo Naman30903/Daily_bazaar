@@ -72,5 +72,5 @@ func main() {
 	handler := cors.Handler(mux)
 
 	log.Printf("Server starting on port %s", cfg.Port)
-	_ = http.ListenAndServe(":"+cfg.Port, handler)
+	_ = http.ListenAndServe("0.0.0.0:"+cfg.Port, handler)
 }

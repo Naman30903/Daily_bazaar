@@ -16,13 +16,11 @@ type Config struct {
 }
 
 func Load() (*Config, error) {
-	// Try to load .env from repo root first
-	if err := godotenv.Load("../../.env"); err != nil {
-		// If that fails, try current directory
-		if err2 := godotenv.Load(".env"); err2 != nil {
-			return nil, fmt.Errorf("failed to load .env file: tried '../../.env' and '.env' - %v", err)
-		}
-	}
+	// Try to load .env from repo root first (for development)
+	_ = godotenv.Load("../../.env")
+	// If that fails, try current directory
+	_ = godotenv.Load(".env")
+	// In production (e.g., Render), env vars are set directly, so .env is optional
 
 	cfg := &Config{
 		Port:        strings.TrimSpace(os.Getenv("PORT")),
