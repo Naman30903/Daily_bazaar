@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: daily-bazaar-backend
+    env: go
+    branch: prod
+    root: backend
+    buildCommand: go build -o server ./cmd/server
+    startCommand: ./server
+    plan: free
+    region: oregon
