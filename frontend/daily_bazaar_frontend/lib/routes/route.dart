@@ -1,4 +1,5 @@
 import 'package:daily_bazaar_frontend/screens/Profile/address_screen.dart';
+import 'package:flutter/foundation.dart' hide Category;
 import 'package:daily_bazaar_frontend/screens/category_browse.dart';
 import 'package:daily_bazaar_frontend/screens/checkout/checkout_screen.dart';
 import 'package:daily_bazaar_frontend/screens/home_page.dart';
@@ -110,6 +111,18 @@ class _SplashPageState extends State<SplashPage> {
 
     // Check if user is logged in
     final token = TokenStorage.getToken();
+    if (kDebugMode) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Debug Mode: Bypassing Login'),
+          duration: Duration(seconds: 1),
+        ),
+      );
+      Navigator.of(context).pushReplacementNamed(Routes.home);
+      return;
+    }
+
     if (token != null && token.isNotEmpty) {
       Navigator.of(context).pushReplacementNamed(Routes.home);
     } else {

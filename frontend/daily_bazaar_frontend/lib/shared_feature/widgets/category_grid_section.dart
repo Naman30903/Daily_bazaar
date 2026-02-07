@@ -46,7 +46,8 @@ class CategoryGridSection extends StatelessWidget {
               crossAxisCount: 4,
               mainAxisSpacing: 8,
               crossAxisSpacing: 8,
-              childAspectRatio: 0.68, // Slightly taller to accommodate text
+              childAspectRatio:
+                  0.6, // Taller to accommodate text without overflow
             ),
             itemCount: categories.length > 8 ? 8 : categories.length,
             itemBuilder: (context, index) {
