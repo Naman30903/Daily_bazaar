@@ -1,0 +1,22 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "daily_bazaar_frontend",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "daily_bazaar_frontend (profile)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "daily_bazaar_frontend (release)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        }
+    ]
+}

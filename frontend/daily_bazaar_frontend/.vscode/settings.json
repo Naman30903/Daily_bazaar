@@ -1,0 +1,4 @@
+{
+    "dart.projectSearchDepth": 10,
+    "dart.hotReloadOnSave": "all"
+}

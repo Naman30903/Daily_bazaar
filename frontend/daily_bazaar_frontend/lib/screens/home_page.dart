@@ -9,6 +9,7 @@ import 'package:daily_bazaar_frontend/shared_feature/widgets/search_bar_widget.d
 import 'package:daily_bazaar_frontend/shared_feature/widgets/suggested_items_section.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:daily_bazaar_frontend/shared_feature/provider/cart_provider.dart';
 import '../../shared_feature/widgets/bottom_nav_bar.dart';
 
 class HomePage extends ConsumerStatefulWidget {
@@ -111,6 +112,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     final personalAsync = ref.watch(
       filteredRootCategoriesProvider(_personalCareRange),
     );
+    final cartState = ref.watch(cartControllerProvider);
 
     return Scaffold(
       appBar: HomeAppBar(
@@ -236,11 +238,23 @@ class _HomePageState extends ConsumerState<HomePage> {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Navigator.of(context).pushNamed(Routes.checkout),
-        label: const Text('Checkout'),
-        icon: const Icon(Icons.shopping_cart),
-      ),
+      floatingActionButton: cartState.isEmpty
+          ? null
+          : SizedBox(
+              width: 150, // width
+              height: 50, // height
+              child: FloatingActionButton.extended(
+                onPressed: () =>
+                    Navigator.of(context).pushNamed(Routes.checkout),
+                label: const Text(
+                  'Checkout',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                icon: const Icon(Icons.shopping_cart),
+                shape: const StadiumBorder(),
+              ),
+            ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       bottomNavigationBar: AppBottomNavBar(
         currentIndex: _currentNavIndex,
         onTap: (index) {
