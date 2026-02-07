@@ -35,7 +35,6 @@ class ApiClient {
     Map<String, String>? headers,
   }) async {
     try {
-      debugPrint('API Request: ${_uri(path)}');
       final res = await _http.post(
         _uri(path),
         headers: <String, String>{
