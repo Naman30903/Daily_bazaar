@@ -240,19 +240,33 @@ class _HomePageState extends ConsumerState<HomePage> {
       ),
       floatingActionButton: cartState.isEmpty
           ? null
-          : SizedBox(
-              width: 150, // width
-              height: 50, // height
-              child: FloatingActionButton.extended(
-                onPressed: () =>
-                    Navigator.of(context).pushNamed(Routes.checkout),
-                label: const Text(
-                  'Checkout',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                icon: const Icon(Icons.shopping_cart),
-                shape: const StadiumBorder(),
+          : FloatingActionButton.extended(
+              onPressed: () => Navigator.of(context).pushNamed(Routes.checkout),
+              label: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'View Cart',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      height: 1.0,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${cartState.totalItems} ${cartState.totalItems == 1 ? 'item' : 'items'}',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      height: 1.0,
+                    ),
+                  ),
+                ],
               ),
+              icon: const Icon(Icons.shopping_cart_outlined),
+              shape: const StadiumBorder(),
             ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       bottomNavigationBar: AppBottomNavBar(

@@ -1,9 +1,4 @@
-import 'package:daily_bazaar_frontend/shared_feature/api/user_api.dart';
-import 'package:daily_bazaar_frontend/shared_feature/config/config.dart';
 import 'package:daily_bazaar_frontend/shared_feature/config/hive.dart';
-import 'package:daily_bazaar_frontend/shared_feature/helper/api_exception.dart';
-import 'package:daily_bazaar_frontend/shared_feature/models/address_model.dart';
-import 'package:daily_bazaar_frontend/shared_feature/models/auth_model.dart';
 import 'package:daily_bazaar_frontend/shared_feature/widgets/snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -35,7 +30,7 @@ class ProfilePage extends ConsumerWidget {
                 child: CircularProgressIndicator(strokeWidth: 2),
               ),
             ),
-            error: (_, __) => const SizedBox.shrink(),
+            error: (_, _) => const SizedBox.shrink(),
           ),
         ],
       ),
@@ -74,25 +69,28 @@ class ProfilePage extends ConsumerWidget {
               _ProfileHeader(name: data.user.fullName, phone: data.user.phone),
               const SizedBox(height: 14),
               Row(
-                children: const [
+                children: [
                   Expanded(
                     child: _QuickActionCard(
                       icon: Icons.shopping_bag_outlined,
                       label: 'Your orders',
+                      onTap: () {},
                     ),
                   ),
-                  SizedBox(width: 12),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: _QuickActionCard(
                       icon: Icons.account_balance_wallet_outlined,
                       label: 'Wallet',
+                      onTap: () {},
                     ),
                   ),
-                  SizedBox(width: 12),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: _QuickActionCard(
                       icon: Icons.support_agent_outlined,
                       label: 'Need help?',
+                      onTap: () {},
                     ),
                   ),
                 ],

@@ -4,19 +4,31 @@
         {
             "name": "daily_bazaar_frontend",
             "request": "launch",
-            "type": "dart"
+            "type": "dart",
+            "toolArgs": [
+                "--dart-define",
+                "API_BASE_URL=https://daily-bazaar.onrender.com"
+            ]
         },
         {
             "name": "daily_bazaar_frontend (profile)",
             "request": "launch",
             "type": "dart",
-            "flutterMode": "profile"
+            "flutterMode": "profile",
+            "toolArgs": [
+                "--dart-define",
+                "API_BASE_URL=https://daily-bazaar.onrender.com"
+            ]
         },
         {
             "name": "daily_bazaar_frontend (release)",
             "request": "launch",
             "type": "dart",
-            "flutterMode": "release"
+            "flutterMode": "release",
+            "toolArgs": [
+                "--dart-define",
+                "API_BASE_URL=https://daily-bazaar.onrender.com"
+            ]
         }
     ]
 }
