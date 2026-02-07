@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
@@ -16,11 +17,11 @@ type Config struct {
 }
 
 func Load() (*Config, error) {
-	// Try to load .env from repo root first
+	// Attempt to load .env for local development. Failures are non-fatal
+	// because production environments (Render, etc.) provide env vars.
 	if err := godotenv.Load("../../.env"); err != nil {
-		// If that fails, try current directory
 		if err2 := godotenv.Load(".env"); err2 != nil {
-			return nil, fmt.Errorf("failed to load .env file: tried '../../.env' and '.env' - %v", err)
+			log.Printf(".env not found (this is OK in production): tried '../../.env' and '.env' - %v", err)
 		}
 	}
 

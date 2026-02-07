@@ -60,6 +60,14 @@ func main() {
 		adminMiddleware,
 	)
 
+	// Add a lightweight public health endpoint that doesn't require auth.
+	// Render and load balancers can use this to quickly check service health.
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"status":"ok"}`))
+	})
+
 	// CORS
 	cors := middleware.NewCORSMiddleware([]string{
 		"http://localhost:3000",
