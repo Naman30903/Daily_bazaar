@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:daily_bazaar_frontend/shared_feature/models/address_model.dart';
 import 'package:daily_bazaar_frontend/shared_feature/widgets/snackbar.dart';
@@ -209,6 +211,7 @@ class _AddressesPageState extends ConsumerState<AddressesPage> {
       builder: (ctx) {
         bool isDefault = existing?.isDefault ?? false;
         bool isSaving = false;
+        bool isFetchingLocation = false;
 
         return StatefulBuilder(
           builder: (ctx, setSheetState) {
@@ -274,6 +277,94 @@ class _AddressesPageState extends ConsumerState<AddressesPage> {
                       ],
                     ),
                     const SizedBox(height: 10),
+
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: (isSaving || isFetchingLocation)
+                            ? null
+                            : () async {
+                                setSheetState(() => isFetchingLocation = true);
+                                try {
+                                  bool serviceEnabled;
+                                  LocationPermission permission;
+
+                                  serviceEnabled =
+                                      await Geolocator.isLocationServiceEnabled();
+                                  if (!serviceEnabled) {
+                                    throw Exception(
+                                      'Location services are disabled.',
+                                    );
+                                  }
+
+                                  permission =
+                                      await Geolocator.checkPermission();
+                                  if (permission == LocationPermission.denied) {
+                                    permission =
+                                        await Geolocator.requestPermission();
+                                    if (permission ==
+                                        LocationPermission.denied) {
+                                      throw Exception(
+                                        'Location permissions are denied',
+                                      );
+                                    }
+                                  }
+
+                                  if (permission ==
+                                      LocationPermission.deniedForever) {
+                                    throw Exception(
+                                      'Location permissions are permanently denied, we cannot request permissions.',
+                                    );
+                                  }
+
+                                  Position position =
+                                      await Geolocator.getCurrentPosition();
+                                  List<Placemark> placemarks =
+                                      await placemarkFromCoordinates(
+                                        position.latitude,
+                                        position.longitude,
+                                      );
+
+                                  if (placemarks.isNotEmpty) {
+                                    final place = placemarks.first;
+                                    line1Ctrl.text = place.street ?? '';
+                                    line2Ctrl.text = place.subLocality ?? '';
+                                    cityCtrl.text = place.locality ?? '';
+                                    districtCtrl.text =
+                                        place.subAdministrativeArea ?? '';
+                                    stateCtrl.text =
+                                        place.administrativeArea ?? '';
+                                    pincodeCtrl.text = place.postalCode ?? '';
+                                  }
+                                } catch (e) {
+                                  if (ctx.mounted) {
+                                    showAppSnackBar(context, e.toString());
+                                  }
+                                } finally {
+                                  if (ctx.mounted) {
+                                    setSheetState(
+                                      () => isFetchingLocation = false,
+                                    );
+                                  }
+                                }
+                              },
+                        icon: isFetchingLocation
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.my_location),
+                        label: Text(
+                          isFetchingLocation
+                              ? 'Fetching location...'
+                              : 'Use current location',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
 
                     Form(
                       key: formKey,

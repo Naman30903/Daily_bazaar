@@ -1,5 +1,6 @@
 import 'package:daily_bazaar_frontend/screens/Profile/address_screen.dart';
 import 'package:flutter/foundation.dart' hide Category;
+import 'package:geolocator/geolocator.dart';
 import 'package:daily_bazaar_frontend/screens/category_browse.dart';
 import 'package:daily_bazaar_frontend/screens/checkout/checkout_screen.dart';
 import 'package:daily_bazaar_frontend/screens/home_page.dart';
@@ -115,6 +116,17 @@ class _SplashPageState extends State<SplashPage> {
 
   Future<void> _bootstrap() async {
     await Future<void>.delayed(const Duration(milliseconds: 500));
+
+    // Request location permission on startup
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+    } catch (e) {
+      debugPrint('Error requesting location permission: $e');
+    }
+
     if (!mounted) return;
 
     // Check if user is logged in

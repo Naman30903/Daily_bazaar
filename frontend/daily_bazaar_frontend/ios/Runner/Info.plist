@@ -49,5 +49,9 @@
 	<string>We need your permission to access the microphone for voice search.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>We need your location to help you add your address efficiently.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>We need your location to help you add your address efficiently.</string>
 </dict>
 </plist>
