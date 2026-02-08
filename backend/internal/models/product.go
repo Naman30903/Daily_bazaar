@@ -34,6 +34,14 @@ type ProductVariant struct {
 	Name       string `json:"name"`
 	PriceCents int64  `json:"price_cents"`
 	Weight     string `json:"weight,omitempty"`
+	MRPCents   *int64 `json:"mrp_cents,omitempty"`
+}
+
+type AddProductVariant struct {
+	Name       string `json:"name"`
+	PriceCents int64  `json:"price_cents"`
+	Weight     string `json:"weight,omitempty"`
+	MRPCents   *int64 `json:"mrp_cents,omitempty"`
 }
 
 type AddProduct struct {
@@ -45,8 +53,10 @@ type AddProduct struct {
 	Active      bool                   `json:"active"`
 	CategoryIDs []string               `json:"category_ids"` // NEW: multiple categories
 	Metadata    map[string]interface{} `json:"metadata,omitempty"`
-	MRPCents    *int64                 `json:"mrp_cents,omitempty"`
-	Weight      string                 `json:"weight,omitempty"`
+	MRPCents    *int64              `json:"mrp_cents,omitempty"`
+	Weight      string              `json:"weight,omitempty"`
+	Variants    []AddProductVariant `json:"variants,omitempty"`
+	Images      []AddProductImage   `json:"images,omitempty"`
 }
 
 type UpdateProduct struct {
@@ -58,8 +68,10 @@ type UpdateProduct struct {
 	Active      *bool                  `json:"active,omitempty"`
 	CategoryIDs []string               `json:"category_ids,omitempty"` // NEW: replace categories
 	Metadata    map[string]interface{} `json:"metadata,omitempty"`
-	MRPCents    *int64                 `json:"mrp_cents,omitempty"`
-	Weight      *string                `json:"weight,omitempty"`
+	MRPCents    *int64              `json:"mrp_cents,omitempty"`
+	Weight      *string             `json:"weight,omitempty"`
+	Variants    []AddProductVariant `json:"variants,omitempty"` // NEW: replace variants
+	Images      []AddProductImage   `json:"images,omitempty"`   // NEW: replace images
 }
 
 type ProductSearchParams struct {

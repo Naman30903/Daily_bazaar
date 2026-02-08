@@ -531,7 +531,121 @@ func (r *ProductRepository) DeleteProduct(id string) error {
 	return nil
 }
 
-// Helper: parse nested Supabase response with categories
+// ReplaceProductVariants replaces all variants for a product
+func (r *ProductRepository) ReplaceProductVariants(productID string, variants []models.AddProductVariant) error {
+	// 1. Delete existing variants
+	deleteURL := fmt.Sprintf("%s/rest/v1/product_variants?product_id=eq.%s", r.baseURL, productID)
+	req, err := http.NewRequest(http.MethodDelete, deleteURL, nil)
+	if err != nil {
+		return err
+	}
+	r.setHeaders(req)
+	resp, err := r.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusNoContent && resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to delete variants: %d", resp.StatusCode)
+	}
+
+	if len(variants) == 0 {
+		return nil
+	}
+
+	// 2. Insert new variants
+	insertURL := fmt.Sprintf("%s/rest/v1/product_variants", r.baseURL)
+	variantData := make([]map[string]interface{}, len(variants))
+	for i, v := range variants {
+		variantData[i] = map[string]interface{}{
+			"product_id":  productID,
+			"name":        v.Name,
+			"price_cents": v.PriceCents,
+			"weight":      v.Weight,
+			"mrp_cents":   v.MRPCents,
+		}
+	}
+
+	body, err := json.Marshal(variantData)
+	if err != nil {
+		return err
+	}
+
+	req, err = http.NewRequest(http.MethodPost, insertURL, bytes.NewBuffer(body))
+	if err != nil {
+		return err
+	}
+	r.setHeaders(req)
+	resp, err = r.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusCreated {
+		b, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("failed to insert variants: %d %s", resp.StatusCode, string(b))
+	}
+
+	return nil
+}
+
+// ReplaceProductImages replaces all images for a product
+func (r *ProductRepository) ReplaceProductImages(productID string, images []models.AddProductImage) error {
+	// 1. Delete existing images
+	deleteURL := fmt.Sprintf("%s/rest/v1/product_images?product_id=eq.%s", r.baseURL, productID)
+	req, err := http.NewRequest(http.MethodDelete, deleteURL, nil)
+	if err != nil {
+		return err
+	}
+	r.setHeaders(req)
+	resp, err := r.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusNoContent && resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to delete images: %d", resp.StatusCode)
+	}
+
+	if len(images) == 0 {
+		return nil
+	}
+
+	// 2. Insert new images
+	insertURL := fmt.Sprintf("%s/rest/v1/product_images", r.baseURL)
+	imageData := make([]map[string]interface{}, len(images))
+	for i, img := range images {
+		imageData[i] = map[string]interface{}{
+			"product_id": productID,
+			"url":        img.URL,
+			"position":   img.Position,
+		}
+	}
+
+	body, err := json.Marshal(imageData)
+	if err != nil {
+		return err
+	}
+
+	req, err = http.NewRequest(http.MethodPost, insertURL, bytes.NewBuffer(body))
+	if err != nil {
+		return err
+	}
+	r.setHeaders(req)
+	resp, err = r.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusCreated {
+		b, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("failed to insert images: %d %s", resp.StatusCode, string(b))
+	}
+
+	return nil
+}
 func (r *ProductRepository) parseProductWithCategories(raw map[string]interface{}) (*models.Product, error) {
 	product := &models.Product{
 		ID:          getString(raw, "id"),
@@ -608,6 +722,10 @@ func (r *ProductRepository) parseProductWithCategories(raw map[string]interface{
 					PriceCents: getInt64(m, "price_cents"),
 					Weight:     getString(m, "weight"),
 				})
+				if mrp, ok := m["mrp_cents"].(float64); ok {
+					v := int64(mrp)
+					product.Variants[len(product.Variants)-1].MRPCents = &v
+				}
 			}
 		}
 	}

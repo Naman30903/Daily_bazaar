@@ -67,7 +67,21 @@ func (s *ProductService) CreateProduct(req *models.AddProduct) (*models.Product,
 		return nil, errors.New("failed to link categories: " + err.Error())
 	}
 
-	// Step 3: Fetch full product with categories
+	// Step 3: Insert Variants
+	if len(req.Variants) > 0 {
+		if err := s.productRepo.ReplaceProductVariants(product.ID, req.Variants); err != nil {
+			return nil, errors.New("failed to add variants: " + err.Error())
+		}
+	}
+
+	// Step 4: Insert Images
+	if len(req.Images) > 0 {
+		if err := s.productRepo.ReplaceProductImages(product.ID, req.Images); err != nil {
+			return nil, errors.New("failed to add images: " + err.Error())
+		}
+	}
+
+	// Step 5: Fetch full product with categories, variants, images
 	return s.productRepo.GetProductByID(product.ID)
 }
 
@@ -139,6 +153,21 @@ func (s *ProductService) UpdateProduct(id string, req *models.UpdateProduct) (*m
 		// Step 2: Insert new mappings
 		if err := s.productRepo.LinkProductCategories(id, req.CategoryIDs); err != nil {
 			return nil, errors.New("failed to link new categories: " + err.Error())
+		}
+	}
+
+	// Handle variants replacement if provided (nil means no update, empty slice means clear all)
+	if req.Variants != nil {
+		if err := s.productRepo.ReplaceProductVariants(id, req.Variants); err != nil {
+			return nil, err
+		}
+	}
+
+	// Handle images replacement if provided
+	if req.Images != nil {
+		// Set ProductID involved in images just in case, though repo handles it
+		if err := s.productRepo.ReplaceProductImages(id, req.Images); err != nil {
+			return nil, err
 		}
 	}
 
