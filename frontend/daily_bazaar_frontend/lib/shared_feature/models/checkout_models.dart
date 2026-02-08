@@ -30,8 +30,7 @@ class CartItem {
       : null;
 
   int? get savingsPerItemCents {
-    if (mrpCentsSnapshot == null ||
-        mrpCentsSnapshot! <= priceCentsSnapshot) {
+    if (mrpCentsSnapshot == null || mrpCentsSnapshot! <= priceCentsSnapshot) {
       return null;
     }
     return mrpCentsSnapshot! - priceCentsSnapshot;
@@ -60,11 +59,7 @@ class CartItem {
 }
 
 /// Types of delivery instructions
-enum DeliveryInstructionType {
-  pressHereAndHold,
-  avoidCalling,
-  dontRingBell,
-}
+enum DeliveryInstructionType { pressHereAndHold, avoidCalling, dontRingBell }
 
 /// Represents a delivery instruction option
 class DeliveryInstruction {
@@ -97,58 +92,42 @@ class BillDetails {
     required this.itemsTotalCents,
     required this.savedAmountCents,
     required this.handlingChargeCents,
-    this.surgeChargeCents,
     this.deliveryFeeCents = 0,
   });
 
   final int itemsTotalCents;
   final int savedAmountCents;
   final int handlingChargeCents;
-  final int? surgeChargeCents;
   final int deliveryFeeCents;
 
   double get itemsTotalInRupees => itemsTotalCents / 100;
   double get savedAmountInRupees => savedAmountCents / 100;
   double get handlingChargeInRupees => handlingChargeCents / 100;
-  double? get surgeChargeInRupees =>
-      surgeChargeCents != null ? surgeChargeCents! / 100 : null;
   double get deliveryFeeInRupees => deliveryFeeCents / 100;
 
   int get grandTotalCents {
-    return itemsTotalCents +
-        handlingChargeCents +
-        (surgeChargeCents ?? 0) +
-        deliveryFeeCents;
+    return itemsTotalCents + handlingChargeCents + deliveryFeeCents;
   }
 
   double get grandTotalInRupees => grandTotalCents / 100;
 
   String get formattedItemsTotal => '₹${itemsTotalInRupees.toStringAsFixed(0)}';
-  String get formattedSavedAmount => '₹${savedAmountInRupees.toStringAsFixed(0)}';
+  String get formattedSavedAmount =>
+      '₹${savedAmountInRupees.toStringAsFixed(0)}';
   String get formattedHandlingCharge =>
       '₹${handlingChargeInRupees.toStringAsFixed(0)}';
-  String? get formattedSurgeCharge => surgeChargeInRupees != null
-      ? '₹${surgeChargeInRupees!.toStringAsFixed(0)}'
-      : null;
   String get formattedGrandTotal => '₹${grandTotalInRupees.toStringAsFixed(0)}';
-
-  /// Returns true if surge charge should be waived (items total >= ₹499)
-  bool get isSurgeChargeWaived => itemsTotalCents >= 49900;
 
   BillDetails copyWith({
     int? itemsTotalCents,
     int? savedAmountCents,
     int? handlingChargeCents,
-    int? surgeChargeCents,
-    bool clearSurgeCharge = false,
     int? deliveryFeeCents,
   }) {
     return BillDetails(
       itemsTotalCents: itemsTotalCents ?? this.itemsTotalCents,
       savedAmountCents: savedAmountCents ?? this.savedAmountCents,
       handlingChargeCents: handlingChargeCents ?? this.handlingChargeCents,
-      surgeChargeCents:
-          clearSurgeCharge ? null : (surgeChargeCents ?? this.surgeChargeCents),
       deliveryFeeCents: deliveryFeeCents ?? this.deliveryFeeCents,
     );
   }

@@ -13,6 +13,7 @@ class CheckoutState {
     this.donationAmountCents,
     this.deliveryAddress,
     required this.billDetails,
+    this.gstin,
     this.isLoading = false,
     this.error,
   });
@@ -22,6 +23,7 @@ class CheckoutState {
   final int? donationAmountCents;
   final UserAddress? deliveryAddress;
   final BillDetails billDetails;
+  final String? gstin;
   final bool isLoading;
   final String? error;
 
@@ -46,6 +48,7 @@ class CheckoutState {
     bool clearDonation = false,
     UserAddress? deliveryAddress,
     BillDetails? billDetails,
+    String? gstin,
     bool? isLoading,
     String? error,
     bool clearError = false,
@@ -58,6 +61,7 @@ class CheckoutState {
           : (donationAmountCents ?? this.donationAmountCents),
       deliveryAddress: deliveryAddress ?? this.deliveryAddress,
       billDetails: billDetails ?? this.billDetails,
+      gstin: gstin ?? this.gstin,
       isLoading: isLoading ?? this.isLoading,
       error: clearError ? null : (error ?? this.error),
     );
@@ -66,9 +70,7 @@ class CheckoutState {
 
 @riverpod
 class CheckoutController extends _$CheckoutController {
-  static const int _surgeChargeCents = 3000; // ₹30
   static const int _handlingChargeCents = 500; // ₹5
-  static const int _surgeChargeWaiverThresholdCents = 49900; // ₹499
 
   @override
   CheckoutState build() {
@@ -158,6 +160,11 @@ class CheckoutController extends _$CheckoutController {
     state = state.copyWith(clearDonation: true);
   }
 
+  /// Set GSTIN
+  void setGstin(String gstin) {
+    state = state.copyWith(gstin: gstin);
+  }
+
   /// Calculate bill details based on cart items
   BillDetails _calculateBillDetails(List<CartItem> items) {
     // Calculate items total
@@ -172,17 +179,10 @@ class CheckoutController extends _$CheckoutController {
       (sum, item) => sum + (item.totalSavingsCents ?? 0),
     );
 
-    // Determine surge charge
-    final int? surgeChargeCents =
-        itemsTotalCents >= _surgeChargeWaiverThresholdCents
-        ? null
-        : _surgeChargeCents;
-
     return BillDetails(
       itemsTotalCents: itemsTotalCents,
       savedAmountCents: savedAmountCents,
       handlingChargeCents: _handlingChargeCents,
-      surgeChargeCents: surgeChargeCents,
       deliveryFeeCents: 0,
     );
   }

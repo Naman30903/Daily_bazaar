@@ -5,10 +5,7 @@ import 'package:flutter/material.dart';
 
 /// Bill details section
 class BillDetailsSection extends StatelessWidget {
-  const BillDetailsSection({
-    super.key,
-    required this.billDetails,
-  });
+  const BillDetailsSection({super.key, required this.billDetails});
 
   final BillDetails billDetails;
 
@@ -53,15 +50,6 @@ class BillDetailsSection extends StatelessWidget {
             value: billDetails.formattedHandlingCharge,
           ),
 
-          // Surge charge (conditional)
-          if (billDetails.surgeChargeCents != null)
-            BillRowItem(
-              label: 'High demand surge charge',
-              value: billDetails.formattedSurgeCharge!,
-              sublabel: 'No surge charge on shopping products worth ₹499 or more',
-              sublabelColor: Colors.orange,
-            ),
-
           const Divider(height: 24),
 
           // Grand total
@@ -75,47 +63,7 @@ class BillDetailsSection extends StatelessWidget {
 
           // Savings banner
           if (billDetails.savedAmountCents > 0)
-            SavingsBanner(
-              savingsAmount: billDetails.formattedSavedAmount,
-            ),
-
-          const SizedBox(height: 16),
-
-          // Add GSTIN row
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () {
-                // TODO: Navigate to GSTIN entry
-              },
-              borderRadius: BorderRadius.circular(8),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.receipt_long_outlined,
-                      size: 20,
-                      color: cs.primary,
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      'Add GSTIN',
-                      style: textTheme.bodyMedium?.copyWith(
-                        color: cs.primary,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const Spacer(),
-                    Icon(
-                      Icons.chevron_right,
-                      color: cs.onSurfaceVariant,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
+            SavingsBanner(savingsAmount: billDetails.formattedSavedAmount),
         ],
       ),
     );

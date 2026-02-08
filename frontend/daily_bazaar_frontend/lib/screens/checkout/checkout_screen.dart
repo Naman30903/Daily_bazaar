@@ -69,6 +69,7 @@ class CheckoutScreen extends ConsumerWidget {
               const SizedBox(height: 8),
 
               // Bill Details Section
+              // Bill Details Section
               BillDetailsSection(billDetails: checkoutState.billDetails),
 
               const SizedBox(height: 8),
