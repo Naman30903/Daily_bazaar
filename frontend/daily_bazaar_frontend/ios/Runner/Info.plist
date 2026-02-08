@@ -43,6 +43,10 @@
 	</array>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>We need your permission to recognize your speech for product search.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>We need your permission to access the microphone for voice search.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 </dict>

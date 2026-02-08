@@ -7,6 +7,8 @@ import 'package:daily_bazaar_frontend/shared_feature/provider/search_provider.da
 import 'package:daily_bazaar_frontend/shared_feature/widgets/product_card_browse.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:speech_to_text/speech_recognition_result.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 
 /// Search page with autocomplete suggestions and product grid.
 class SearchPage extends ConsumerStatefulWidget {
@@ -24,12 +26,16 @@ class _SearchPageState extends ConsumerState<SearchPage> {
   final Debouncer _debouncer = Debouncer(
     delay: const Duration(milliseconds: 300),
   );
+  final SpeechToText _speechToText = SpeechToText();
+  bool _speechEnabled = false;
+  bool _isListening = false;
 
   bool _showSuggestions = true;
 
   @override
   void initState() {
     super.initState();
+    _initSpeech();
     if (widget.initialQuery != null && widget.initialQuery!.isNotEmpty) {
       _searchController.text = widget.initialQuery!;
       // Perform initial search
@@ -84,6 +90,55 @@ class _SearchPageState extends ConsumerState<SearchPage> {
     _focusNode.requestFocus();
   }
 
+  Future<void> _initSpeech() async {
+    try {
+      _speechEnabled = await _speechToText.initialize();
+      setState(() {});
+    } catch (e) {
+      debugPrint('Speech initialization failed: $e');
+    }
+  }
+
+  void _startListening() async {
+    if (!_speechEnabled) {
+      // Try initializing again if it failed previously
+      await _initSpeech();
+      if (!_speechEnabled) return;
+    }
+
+    await _speechToText.listen(onResult: _onSpeechResult);
+    setState(() {
+      _isListening = true;
+    });
+  }
+
+  void _stopListening() async {
+    await _speechToText.stop();
+    setState(() {
+      _isListening = false;
+    });
+  }
+
+  void _onSpeechResult(SpeechRecognitionResult result) {
+    setState(() {
+      _searchController.text = result.recognizedWords;
+      // selection is maintained at end
+      _searchController.selection = TextSelection.fromPosition(
+        TextPosition(offset: _searchController.text.length),
+      );
+    });
+
+    // Update suggestions while typing
+    _onSearchChanged(result.recognizedWords);
+
+    if (result.finalResult) {
+      setState(() {
+        _isListening = false;
+      });
+      _onSearch();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -109,11 +164,17 @@ class _SearchPageState extends ConsumerState<SearchPage> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.mic_outlined),
+            icon: Icon(_isListening ? Icons.mic : Icons.mic_none),
+            color: _isListening ? cs.primary : cs.onSurfaceVariant,
             onPressed: () {
-              // TODO: Voice search
+              if (_isListening) {
+                _stopListening();
+              } else {
+                _startListening();
+              }
             },
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: Column(
