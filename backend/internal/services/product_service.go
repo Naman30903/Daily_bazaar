@@ -51,6 +51,8 @@ func (s *ProductService) CreateProduct(req *models.AddProduct) (*models.Product,
 		Active:      req.Active,
 		CreatedAt:   time.Now(),
 		Metadata:    req.Metadata,
+		MRPCents:    req.MRPCents,
+		Weight:      req.Weight,
 	}
 
 	// Step 1: Insert product
@@ -107,6 +109,12 @@ func (s *ProductService) UpdateProduct(id string, req *models.UpdateProduct) (*m
 	}
 	if req.Metadata != nil {
 		updates["metadata"] = req.Metadata
+	}
+	if req.MRPCents != nil {
+		updates["mrp_cents"] = *req.MRPCents
+	}
+	if req.Weight != nil {
+		updates["weight"] = *req.Weight
 	}
 
 	// Update product fields if any

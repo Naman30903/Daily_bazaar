@@ -19,6 +19,7 @@ type Product struct {
 	ReviewCount     *int                   `json:"review_count,omitempty"`
 	DeliveryMinutes *int                   `json:"delivery_minutes,omitempty"`
 	Weight          string                 `json:"weight,omitempty"`
+	MRPCents        *int64                 `json:"mrp_cents,omitempty"`
 }
 
 type ProductCategory struct {
@@ -44,6 +45,8 @@ type AddProduct struct {
 	Active      bool                   `json:"active"`
 	CategoryIDs []string               `json:"category_ids"` // NEW: multiple categories
 	Metadata    map[string]interface{} `json:"metadata,omitempty"`
+	MRPCents    *int64                 `json:"mrp_cents,omitempty"`
+	Weight      string                 `json:"weight,omitempty"`
 }
 
 type UpdateProduct struct {
@@ -55,6 +58,8 @@ type UpdateProduct struct {
 	Active      *bool                  `json:"active,omitempty"`
 	CategoryIDs []string               `json:"category_ids,omitempty"` // NEW: replace categories
 	Metadata    map[string]interface{} `json:"metadata,omitempty"`
+	MRPCents    *int64                 `json:"mrp_cents,omitempty"`
+	Weight      *string                `json:"weight,omitempty"`
 }
 
 type ProductSearchParams struct {

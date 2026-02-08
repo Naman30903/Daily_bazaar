@@ -44,6 +44,8 @@ func (r *ProductRepository) CreateProduct(product *models.Product) error {
 		"active":      product.Active,
 		"created_at":  product.CreatedAt,
 		"metadata":    product.Metadata,
+		"mrp_cents":   product.MRPCents,
+		"weight":      product.Weight,
 	}
 
 	body, err := json.Marshal(productData)
@@ -338,6 +340,7 @@ func (r *ProductRepository) GetAllProductNames() ([]string, error) {
 func (r *ProductRepository) UpdateProduct(id string, updates map[string]interface{}) (*models.Product, error) {
 	urlStr := fmt.Sprintf("%s/rest/v1/products?id=eq.%s", r.baseURL, id)
 
+
 	body, err := json.Marshal(updates)
 	if err != nil {
 		return nil, err
@@ -539,6 +542,12 @@ func (r *ProductRepository) parseProductWithCategories(raw map[string]interface{
 		Stock:       getInt(raw, "stock"),
 		Active:      getBool(raw, "active"),
 		CreatedAt:   getTime(raw, "created_at"),
+		Weight:      getString(raw, "weight"),
+	}
+
+	if mrp, ok := raw["mrp_cents"].(float64); ok {
+		v := int64(mrp)
+		product.MRPCents = &v
 	}
 
 	if metadata, ok := raw["metadata"].(map[string]interface{}); ok {

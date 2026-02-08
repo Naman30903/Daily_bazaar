@@ -1,0 +1,323 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { 
+  ArrowLeft, 
+  Save, 
+  Loader2, 
+  CheckCircle2, 
+  AlertCircle 
+} from "lucide-react";
+import api from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+
+interface Category {
+  id: string;
+  name: string;
+}
+
+export default function AddProductPage() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [fetchingCategories, setFetchingCategories] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Form State
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    sku: "",
+    price: "",
+    mrp: "",
+    stock: "",
+    weight: "",
+    active: true,
+    category_ids: [] as string[]
+  });
+
+  // Fetch Categories on Mount
+  useEffect(() => {
+    async function fetchCategories() {
+      try {
+        const res = await api.get("/categories");
+        setCategories(res.data || []);
+      } catch (err) {
+        console.error("Failed to fetch categories", err);
+        // Don't block UI, but warn
+      } finally {
+        setFetchingCategories(false);
+      }
+    }
+    fetchCategories();
+  }, []);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSwitchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({ ...prev, active: e.target.checked }));
+  };
+
+  const handleCategoryChange = (categoryId: string) => {
+    setFormData(prev => {
+      const current = prev.category_ids;
+      if (current.includes(categoryId)) {
+        return { ...prev, category_ids: current.filter(id => id !== categoryId) };
+      } else {
+        return { ...prev, category_ids: [...current, categoryId] };
+      }
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    // Basic Validation
+    if (!formData.name) {
+      setError("Product Name is required");
+      setLoading(false);
+      return;
+    }
+    if (!formData.price) {
+        setError("Price is required");
+        setLoading(false);
+        return;
+    }
+    if (formData.category_ids.length === 0) {
+        setError("Please select at least one category");
+        setLoading(false);
+        return;
+    }
+
+    try {
+      // Prepare Payload
+      const priceCents = Math.round(parseFloat(formData.price) * 100);
+      const mrpCents = formData.mrp ? Math.round(parseFloat(formData.mrp) * 100) : null;
+      
+      const payload = {
+        name: formData.name,
+        description: formData.description,
+        sku: formData.sku,
+        price_cents: priceCents,
+        mrp_cents: mrpCents,
+        stock: parseInt(formData.stock) || 0,
+        weight: formData.weight,
+        active: formData.active,
+        category_ids: formData.category_ids
+      };
+
+      await api.post("/products", payload);
+      
+      // Navigate back to dashboard or product list
+      router.push("/"); 
+    } catch (err: any) {
+      console.error("Failed to create product", err);
+      setError(err.response?.data?.message || "Failed to create product");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="p-8 space-y-8 bg-background min-h-screen">
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <Button variant="outline" size="icon" onClick={() => router.back()}>
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Add New Product</h1>
+          <p className="text-muted-foreground">Create a new product in your inventory.</p>
+        </div>
+      </div>
+
+      <div className="grid gap-8 grid-cols-1 lg:grid-cols-3">
+        {/* Main Form */}
+        <div className="lg:col-span-2 space-y-8">
+          <Card>
+            <CardHeader>
+              <CardTitle>Product Details</CardTitle>
+              <CardDescription>
+                Enter the core details of your product.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-2">
+                <Label htmlFor="name">Product Name *</Label>
+                <Input 
+                  id="name" 
+                  name="name" 
+                  value={formData.name} 
+                  onChange={handleChange} 
+                  placeholder="e.g. Wireless Headphones"
+                  required
+                />
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea 
+                  id="description" 
+                  name="description" 
+                  value={formData.description} 
+                  onChange={handleChange} 
+                  placeholder="Product description..."
+                  rows={4}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+             <CardHeader>
+               <CardTitle>Pricing & Inventory</CardTitle>
+             </CardHeader>
+             <CardContent className="space-y-4">
+               <div className="grid grid-cols-2 gap-4">
+                 <div className="grid gap-2">
+                   <Label htmlFor="price">Price *</Label>
+                   <Input 
+                     id="price" 
+                     name="price" 
+                     type="number"
+                     step="0.01"
+                     value={formData.price} 
+                     onChange={handleChange} 
+                     placeholder="0.00"
+                     required
+                   />
+                 </div>
+                 <div className="grid gap-2">
+                   <Label htmlFor="mrp">MRP (Optional)</Label>
+                   <Input 
+                     id="mrp" 
+                     name="mrp" 
+                     type="number"
+                     step="0.01"
+                     value={formData.mrp} 
+                     onChange={handleChange} 
+                     placeholder="0.00"
+                   />
+                 </div>
+               </div>
+
+               <div className="grid grid-cols-2 gap-4">
+                 <div className="grid gap-2">
+                   <Label htmlFor="stock">Stock Quantity</Label>
+                   <Input 
+                     id="stock" 
+                     name="stock" 
+                     type="number"
+                     value={formData.stock} 
+                     onChange={handleChange} 
+                     placeholder="0"
+                   />
+                 </div>
+                 <div className="grid gap-2">
+                   <Label htmlFor="sku">SKU</Label>
+                   <Input 
+                     id="sku" 
+                     name="sku" 
+                     value={formData.sku} 
+                     onChange={handleChange} 
+                     placeholder="e.g. PROD-001"
+                   />
+                 </div>
+               </div>
+
+                <div className="grid gap-2">
+                   <Label htmlFor="weight">Weight / Unit</Label>
+                   <Input 
+                     id="weight" 
+                     name="weight" 
+                     value={formData.weight} 
+                     onChange={handleChange} 
+                     placeholder="e.g. 1.5kg or 500g"
+                   />
+                 </div>
+             </CardContent>
+          </Card>
+        </div>
+
+        {/* Sidebar */}
+        <div className="space-y-8">
+           {/* Status Card */}
+           <Card>
+             <CardHeader>
+               <CardTitle>Status</CardTitle>
+             </CardHeader>
+             <CardContent>
+               <div className="flex items-center justify-between">
+                 <Label htmlFor="active" className="text-base font-normal">Active Status</Label>
+                 <Switch 
+                   id="active"
+                   checked={formData.active} 
+                   onChange={handleSwitchChange}
+                 />
+               </div>
+               <p className="text-xs text-muted-foreground mt-2">
+                 Active products are visible to customers.
+               </p>
+             </CardContent>
+           </Card>
+
+           {/* Category Card */}
+           <Card>
+             <CardHeader>
+               <CardTitle>Categories *</CardTitle>
+             </CardHeader>
+             <CardContent>
+               {fetchingCategories ? (
+                 <div className="flex justify-center p-4">
+                   <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                 </div>
+               ) : categories.length === 0 ? (
+                 <p className="text-sm text-yellow-600 flex items-center gap-2">
+                   <AlertCircle className="h-4 w-4" /> No categories found. Please add categories first in the backend.
+                 </p>
+               ) : (
+                 <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
+                   {categories.map(cat => (
+                     <label key={cat.id} className="flex items-center space-x-2 cursor-pointer hover:bg-muted/50 p-2 rounded transition-colors">
+                       <input 
+                         type="checkbox" 
+                         checked={formData.category_ids.includes(cat.id)}
+                         onChange={() => handleCategoryChange(cat.id)}
+                         className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                       />
+                       <span className="text-sm">{cat.name}</span>
+                     </label>
+                   ))}
+                 </div>
+               )}
+             </CardContent>
+           </Card>
+           
+           {/* Actions */}
+           <Button className="w-full" size="lg" onClick={handleSubmit} disabled={loading}>
+             {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+             {loading ? "Saving..." : "Save Product"}
+           </Button>
+           
+           {error && (
+             <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md flex items-start gap-2">
+               <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+               <span>{error}</span>
+             </div>
+           )}
+        </div>
+      </div>
+    </div>
+  );
+}
