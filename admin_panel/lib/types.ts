@@ -38,6 +38,17 @@ export interface ProductImage {
   position: number;
 }
 
+export interface AddProductVariant {
+  name: string;
+  price_cents: number;
+  weight?: string;
+}
+
+export interface AddProductImage {
+  url: string;
+  position: number;
+}
+
 export interface AddProduct {
   name: string;
   description?: string;
@@ -47,6 +58,10 @@ export interface AddProduct {
   active: boolean;
   category_ids: string[];
   metadata?: Record<string, any>;
+  variants?: AddProductVariant[];
+  images?: AddProductImage[];
+  weight?: string; 
+  mrp_cents?: number;
 }
 
 export interface Order {

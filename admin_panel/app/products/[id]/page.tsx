@@ -6,9 +6,10 @@ import {
   ArrowLeft, 
   Save, 
   Loader2, 
-  CheckCircle2, 
   AlertCircle,
-  Trash2
+  Trash2,
+  Plus,
+  X
 } from "lucide-react";
 import api from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -45,7 +46,9 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
     stock: "",
     weight: "",
     active: true,
-    category_ids: [] as string[]
+    category_ids: [] as string[],
+    variants: [] as { name: string; price: string; weight: string }[],
+    images: [] as { url: string }[]
   });
 
   // Fetch Categories and Product Data
@@ -68,11 +71,17 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
             description: product.description || "",
             sku: product.sku || "",
             price: (product.price_cents / 100).toFixed(2),
-            mrp: product.metadata?.mrp_cents ? (product.metadata.mrp_cents / 100).toFixed(2) : "", // Assuming metadata holds MRP
+            mrp: product.metadata?.mrp_cents ? (product.metadata.mrp_cents / 100).toFixed(2) : "",
             stock: product.stock.toString(),
             weight: product.weight || "",
             active: product.active,
-            category_ids: product.categories ? product.categories.map(c => c.id) : []
+            category_ids: product.categories ? product.categories.map(c => c.id) : [],
+            variants: product.variants ? product.variants.map(v => ({
+              name: v.name,
+              price: (v.price_cents / 100).toFixed(2),
+              weight: v.weight || ""
+            })) : [],
+            images: product.images ? product.images.map(img => ({ url: img.url })) : []
           });
         }
       } catch (err: any) {
@@ -106,6 +115,50 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
     });
   };
 
+  // Variant Handlers
+  const addVariant = () => {
+    setFormData(prev => ({
+      ...prev,
+      variants: [...prev.variants, { name: "", price: "", weight: "" }]
+    }));
+  };
+
+  const removeVariant = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      variants: prev.variants.filter((_, i) => i !== index)
+    }));
+  };
+
+  const updateVariant = (index: number, field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      variants: prev.variants.map((v, i) => i === index ? { ...v, [field]: value } : v)
+    }));
+  };
+
+  // Image Handlers
+  const addImage = () => {
+    setFormData(prev => ({
+      ...prev,
+      images: [...prev.images, { url: "" }]
+    }));
+  };
+
+  const removeImage = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }));
+  };
+
+  const updateImage = (index: number, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      images: prev.images.map((img, i) => i === index ? { url: value } : img)
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -133,13 +186,19 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
         description: formData.description,
         sku: formData.sku,
         price_cents: priceCents,
-        // stock: parseInt(formData.stock) || 0, // Assuming update endpoint accepts these
         stock: parseInt(formData.stock) || 0,
         weight: formData.weight,
         active: formData.active,
         category_ids: formData.category_ids,
-        // We might need to handle partial updates or full updates depending on API
-        // For now sending full payload
+        variants: formData.variants.filter(v => v.name && v.price).map(v => ({
+          name: v.name,
+          price_cents: Math.round(parseFloat(v.price) * 100),
+          weight: v.weight
+        })),
+        images: formData.images.filter(img => img.url).map((img, idx) => ({
+          url: img.url,
+          position: idx
+        })),
         metadata: mrpCents ? { mrp_cents: mrpCents } : undefined
       };
 
@@ -300,7 +359,112 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                      placeholder="e.g. 1.5kg or 500g"
                    />
                  </div>
-             </CardContent>
+              </CardContent>
+           </Card>
+
+          {/* Variants Card */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div className="space-y-0.5">
+                <CardTitle>Variants</CardTitle>
+                <CardDescription>
+                  Manage product variants (e.g., sizes, weights).
+                </CardDescription>
+              </div>
+              <Button onClick={addVariant} variant="outline" size="sm" type="button">
+                <Plus className="mr-2 h-4 w-4" /> Add Variant
+              </Button>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {formData.variants.length === 0 && (
+                 <p className="text-sm text-muted-foreground text-center py-4 border border-dashed rounded-lg">
+                   No variants added.
+                 </p>
+              )}
+              {formData.variants.map((variant, index) => (
+                <div key={index} className="flex gap-4 items-start p-4 border rounded-lg relative group">
+                  <div className="grid gap-2 flex-1">
+                    <Label>Variant Name</Label>
+                    <Input 
+                      value={variant.name} 
+                      onChange={(e) => updateVariant(index, "name", e.target.value)}
+                      placeholder="e.g. Small" 
+                    />
+                  </div>
+                  <div className="grid gap-2 w-32">
+                    <Label>Price</Label>
+                    <Input 
+                      type="number" 
+                      value={variant.price} 
+                      onChange={(e) => updateVariant(index, "price", e.target.value)}
+                      placeholder="0.00" 
+                    />
+                  </div>
+                  <div className="grid gap-2 w-32">
+                    <Label>Weight</Label>
+                    <Input 
+                      value={variant.weight} 
+                      onChange={(e) => updateVariant(index, "weight", e.target.value)}
+                      placeholder="e.g. 500g" 
+                    />
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => removeVariant(index)}
+                    type="button"
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          {/* Images Card */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div className="space-y-0.5">
+                <CardTitle>Product Images</CardTitle>
+                <CardDescription>
+                  Manage image URLs for your product.
+                </CardDescription>
+              </div>
+              <Button onClick={addImage} variant="outline" size="sm" type="button">
+                <Plus className="mr-2 h-4 w-4" /> Add Image
+              </Button>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {formData.images.length === 0 && (
+                 <p className="text-sm text-muted-foreground text-center py-4 border border-dashed rounded-lg">
+                   No images added.
+                 </p>
+              )}
+              {formData.images.map((img, index) => (
+                <div key={index} className="flex gap-4 items-center">
+                   <div className="h-12 w-12 bg-muted rounded overflow-hidden flex-shrink-0 border flex items-center justify-center">
+                      {img.url ? <img src={img.url} alt="" className="h-full w-full object-cover" /> : <span className="text-xs text-muted-foreground">Preview</span>}
+                   </div>
+                   <div className="flex-1">
+                     <Input 
+                        value={img.url} 
+                        onChange={(e) => updateImage(index, e.target.value)}
+                        placeholder="https://example.com/image.jpg" 
+                      />
+                   </div>
+                   <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    onClick={() => removeImage(index)}
+                    type="button"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </CardContent>
           </Card>
         </div>
 
