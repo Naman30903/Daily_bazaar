@@ -17,8 +17,8 @@ class ProfileData {
 
 @riverpod
 class UserController extends _$UserController {
-  late final ApiClient _client;
-  late final UserApi _api;
+  ApiClient? _client;
+  UserApi? _api;
 
   Future<String> _tokenOrThrow() async {
     final token = TokenStorage.getToken();
@@ -30,14 +30,15 @@ class UserController extends _$UserController {
 
   @override
   Future<ProfileData> build() async {
-    _client = ApiClient(baseUrl: AppEnvironment.apiBaseUrl);
-    ref.onDispose(_client.close);
-
-    _api = UserApi(_client);
+    if (_client == null) {
+      _client = ApiClient(baseUrl: AppEnvironment.apiBaseUrl);
+      ref.onDispose(_client!.close);
+      _api = UserApi(_client!);
+    }
 
     final token = await _tokenOrThrow();
-    final user = await _api.getMe(token);
-    final addresses = await _api.listAddresses(token);
+    final user = await _api!.getMe(token);
+    final addresses = await _api!.listAddresses(token);
     return ProfileData(user: user, addresses: addresses);
   }
 
@@ -53,7 +54,7 @@ class UserController extends _$UserController {
 
   Future<UserAddress> createAddress(CreateAddressRequest req) async {
     final token = await _tokenOrThrow();
-    final addr = await _api.createAddress(token, req);
+    final addr = await _api!.createAddress(token, req);
     // refresh cached data
     await refresh();
     return addr;
@@ -64,14 +65,14 @@ class UserController extends _$UserController {
     Map<String, dynamic> updates,
   ) async {
     final token = await _tokenOrThrow();
-    final addr = await _api.updateAddress(token, id, updates);
+    final addr = await _api!.updateAddress(token, id, updates);
     await refresh();
     return addr;
   }
 
   Future<void> deleteAddress(String id) async {
     final token = await _tokenOrThrow();
-    await _api.deleteAddress(token, id);
+    await _api!.deleteAddress(token, id);
     await refresh();
   }
 }

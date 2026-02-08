@@ -64,8 +64,27 @@ class ProductApi {
   }
 
   /// Search products: GET /api/products/search?q={query}
-  Future<List<Product>> searchProducts(String query) async {
-    final json = await _client.getJsonList('/api/products/search?q=$query');
+  Future<List<Product>> searchProducts(
+    String query, {
+    int? limit,
+    int? offset,
+  }) async {
+    String path = '/api/products/search?q=$query';
+    if (limit != null) path += '&limit=$limit';
+    if (offset != null) path += '&offset=$offset';
+    final json = await _client.getJsonList(path);
     return json.map((item) => Product.fromJson(item)).toList();
+  }
+
+  /// Get search suggestions for autocomplete: GET /api/products/suggestions?q={query}
+  Future<List<String>> getSearchSuggestions(
+    String query, {
+    int limit = 10,
+  }) async {
+    if (query.isEmpty) return [];
+    final json = await _client.getJsonList(
+      '/api/products/suggestions?q=$query&limit=$limit',
+    );
+    return json.map((item) => item.toString()).toList();
   }
 }

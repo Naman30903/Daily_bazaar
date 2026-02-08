@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/namanjain.3009/daily_bazaar/internal/models"
 	"github.com/namanjain.3009/daily_bazaar/internal/repository"
+	"github.com/namanjain.3009/daily_bazaar/internal/utils"
 )
 
 type ProductService struct {
@@ -161,10 +162,43 @@ func (s *ProductService) GetProductByID(id string) (*models.Product, error) {
 }
 
 func (s *ProductService) SearchProducts(query string) ([]models.Product, error) {
+	return s.SearchProductsWithPagination(query, 50, 0)
+}
+
+// SearchProductsWithPagination searches products with optional limit and offset.
+func (s *ProductService) SearchProductsWithPagination(query string, limit, offset int) ([]models.Product, error) {
 	if query == "" {
 		return nil, errors.New("search query is required")
 	}
-	return s.productRepo.SearchProducts(query)
+	if limit <= 0 {
+		limit = 50
+	}
+	return s.productRepo.SearchProductsWithLimit(query, limit, offset)
+}
+
+// GetSearchSuggestions returns fuzzy-matched product name suggestions for autocomplete.
+func (s *ProductService) GetSearchSuggestions(query string, limit int) ([]string, error) {
+	if query == "" {
+		return nil, errors.New("search query is required")
+	}
+	if limit <= 0 {
+		limit = 10
+	}
+
+	// Get all product names for fuzzy matching
+	names, err := s.productRepo.GetAllProductNames()
+	if err != nil {
+		return nil, err
+	}
+
+	// Use fuzzy search to find matching names
+	suggestions := utils.FuzzySearchProducts(query, names, limit)
+	return suggestions, nil
+}
+
+// GetAllProductNames returns all active product names for indexing.
+func (s *ProductService) GetAllProductNames() ([]string, error) {
+	return s.productRepo.GetAllProductNames()
 }
 
 func (s *ProductService) DeleteProduct(id string) error {

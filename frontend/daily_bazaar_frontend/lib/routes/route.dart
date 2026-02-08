@@ -5,6 +5,7 @@ import 'package:daily_bazaar_frontend/screens/checkout/checkout_screen.dart';
 import 'package:daily_bazaar_frontend/screens/home_page.dart';
 import 'package:daily_bazaar_frontend/screens/product_detail_screen.dart';
 import 'package:daily_bazaar_frontend/screens/Profile/profile_screen.dart';
+import 'package:daily_bazaar_frontend/screens/search_page.dart';
 import 'package:flutter/material.dart';
 import 'package:daily_bazaar_frontend/screens/login_page.dart';
 import 'package:daily_bazaar_frontend/screens/register_page.dart';
@@ -23,6 +24,7 @@ abstract final class Routes {
   static const categoryBrowse = '/category-browse';
   static const productDetail = '/product-detail';
   static const checkout = '/checkout';
+  static const search = '/search';
 }
 
 /// Centralized router (single place for navigation evolution).
@@ -80,6 +82,12 @@ abstract final class AppRouter {
         return MaterialPageRoute<void>(
           settings: settings,
           builder: (_) => const CheckoutScreen(),
+        );
+      case Routes.search:
+        final initialQuery = settings.arguments as String?;
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) => SearchPage(initialQuery: initialQuery),
         );
       default:
         return MaterialPageRoute<void>(

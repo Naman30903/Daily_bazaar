@@ -256,9 +256,21 @@ func (r *ProductRepository) GetAllProducts(params *models.ProductSearchParams) (
 
 // SearchProducts searches by name/description WITH categories
 func (r *ProductRepository) SearchProducts(query string) ([]models.Product, error) {
+	return r.SearchProductsWithLimit(query, 50, 0)
+}
+
+// SearchProductsWithLimit searches by name/description WITH categories, with pagination.
+func (r *ProductRepository) SearchProductsWithLimit(query string, limit, offset int) ([]models.Product, error) {
 	encodedQuery := url.QueryEscape("%" + query + "%")
-	urlStr := fmt.Sprintf("%s/rest/v1/products?or=(name.ilike.%s,description.ilike.%s)&active=eq.true&select=*,categories:product_categories(category_id,categories(id,name,slug,position)),variants:product_variants(*)&order=created_at.desc",
+	urlStr := fmt.Sprintf("%s/rest/v1/products?or=(name.ilike.%s,description.ilike.%s)&active=eq.true&select=*,images:product_images(id,url,position),categories:product_categories(category_id,categories(id,name,slug,position)),variants:product_variants(*)&order=created_at.desc",
 		r.baseURL, encodedQuery, encodedQuery)
+
+	if limit > 0 {
+		urlStr += fmt.Sprintf("&limit=%d", limit)
+	}
+	if offset > 0 {
+		urlStr += fmt.Sprintf("&offset=%d", offset)
+	}
 
 	req, err := http.NewRequest(http.MethodGet, urlStr, nil)
 	if err != nil {
@@ -288,6 +300,38 @@ func (r *ProductRepository) SearchProducts(query string) ([]models.Product, erro
 	}
 
 	return products, nil
+}
+
+// GetAllProductNames fetches all active product names for indexing.
+func (r *ProductRepository) GetAllProductNames() ([]string, error) {
+	urlStr := fmt.Sprintf("%s/rest/v1/products?active=eq.true&select=name&order=name.asc", r.baseURL)
+
+	req, err := http.NewRequest(http.MethodGet, urlStr, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	r.setHeaders(req)
+
+	resp, err := r.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var products []struct {
+		Name string `json:"name"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&products); err != nil {
+		return nil, err
+	}
+
+	names := make([]string, len(products))
+	for i, p := range products {
+		names[i] = p.Name
+	}
+
+	return names, nil
 }
 
 // UpdateProduct updates product fields (NOT categories - use LinkProductCategories separately)

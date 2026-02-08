@@ -11,6 +11,7 @@ import 'package:daily_bazaar_frontend/shared_feature/widgets/suggested_items_sec
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:daily_bazaar_frontend/shared_feature/provider/cart_provider.dart';
+import 'package:daily_bazaar_frontend/shared_feature/provider/user_provider.dart';
 import '../../shared_feature/widgets/bottom_nav_bar.dart';
 
 class HomePage extends ConsumerStatefulWidget {
@@ -114,13 +115,33 @@ class _HomePageState extends ConsumerState<HomePage> {
       filteredRootCategoriesProvider(_personalCareRange),
     );
     final cartState = ref.watch(cartControllerProvider);
+    final userAsync = ref.watch(userControllerProvider);
+
+    String deliveryAddressText = 'Set delivery address';
+    userAsync.when(
+      data: (profile) {
+        final addrs = profile.addresses;
+        if (addrs.isNotEmpty) {
+          final addr = addrs.firstWhere(
+            (a) => a.isDefault,
+            orElse: () => addrs.first,
+          );
+          final label = addr.label ?? 'Home';
+          deliveryAddressText = '$label - ${addr.formattedAddress}';
+        } else {
+          deliveryAddressText = 'Add delivery address';
+        }
+      },
+      loading: () => deliveryAddressText = 'Loading address...',
+      error: (_, __) => deliveryAddressText = 'Set delivery address',
+    );
 
     return Scaffold(
       appBar: HomeAppBar(
-        deliveryAddress: 'Home - Sector 62, Noida',
+        deliveryAddress: deliveryAddressText,
         onProfileTap: () => Navigator.of(context).pushNamed(Routes.profile),
         onAddressTap: () {
-          // TODO: show address selection
+          Navigator.of(context).pushNamed(Routes.addresses);
         },
       ),
       body: Center(
@@ -133,7 +154,7 @@ class _HomePageState extends ConsumerState<HomePage> {
               children: [
                 SearchBarWidget(
                   onTap: () {
-                    // TODO: navigate to search page
+                    Navigator.of(context).pushNamed(Routes.search);
                   },
                 ),
                 const SizedBox(height: 8),

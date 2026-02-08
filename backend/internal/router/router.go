@@ -42,6 +42,7 @@ func SetupRoutes(
 	// Product routes (public)
 	mux.HandleFunc("GET /api/products", productHandler.GetAllProducts)
 	mux.HandleFunc("GET /api/products/search", productHandler.SearchProducts)
+	mux.HandleFunc("GET /api/products/suggestions", productHandler.GetSearchSuggestions)
 	mux.HandleFunc("GET /api/products/{id}", productHandler.GetProductByID)
 
 	// ✅ FIX: avoid ambiguous /api/categories/{categoryId}/products
