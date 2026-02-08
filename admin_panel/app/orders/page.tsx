@@ -29,12 +29,12 @@ const statusIcons: Record<OrderStatus, React.ReactNode> = {
 };
 
 const statusColors: Record<OrderStatus, string> = {
-  pending: "bg-yellow-100 text-yellow-800",
-  confirmed: "bg-blue-100 text-blue-800",
-  processing: "bg-purple-100 text-purple-800",
-  shipped: "bg-indigo-100 text-indigo-800",
-  delivered: "bg-green-100 text-green-800",
-  cancelled: "bg-red-100 text-red-800",
+  pending: "bg-yellow-500/10 text-yellow-500",
+  confirmed: "bg-blue-500/10 text-blue-500",
+  processing: "bg-purple-500/10 text-purple-500",
+  shipped: "bg-indigo-500/10 text-indigo-500",
+  delivered: "bg-green-500/10 text-green-500",
+  cancelled: "bg-red-500/10 text-red-500",
 };
 
 export default function OrderListPage() {

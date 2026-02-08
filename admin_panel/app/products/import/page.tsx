@@ -261,8 +261,8 @@ export default function ImportProductsPage() {
                       <td className="px-4 py-3">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
                            categories.some(c => c.name.toLowerCase() === item.data.category?.toLowerCase()) 
-                           ? "bg-blue-100 text-blue-800" 
-                           : "bg-yellow-100 text-yellow-800"
+                           ? "bg-blue-500/10 text-blue-500" 
+                           : "bg-yellow-500/10 text-yellow-500"
                         }`}>
                           {item.data.category || "None"}
                         </span>

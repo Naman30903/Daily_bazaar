@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { 
   ArrowLeft, 
   Save, 
   Loader2, 
   CheckCircle2, 
-  AlertCircle 
+  AlertCircle,
+  Trash2
 } from "lucide-react";
 import api from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -16,15 +17,20 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Product } from "@/lib/types";
 
 interface Category {
   id: string;
   name: string;
 }
 
-export default function AddProductPage() {
+export default function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
+  // Unwrap params using React 19's use() hook
+  const { id } = use(params);
+
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
   const [categories, setCategories] = useState<Category[]>([]);
   const [fetchingCategories, setFetchingCategories] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,21 +48,43 @@ export default function AddProductPage() {
     category_ids: [] as string[]
   });
 
-  // Fetch Categories on Mount
+  // Fetch Categories and Product Data
   useEffect(() => {
-    async function fetchCategories() {
+    async function fetchData() {
       try {
-        const res = await api.get("/categories");
-        setCategories(res.data || []);
-      } catch (err) {
-        console.error("Failed to fetch categories", err);
-        // Don't block UI, but warn
+        setFetching(true);
+        // Parallel fetch
+        const [catRes, prodRes] = await Promise.all([
+          api.get("/categories"),
+          api.get(`/products/${id}`)
+        ]);
+
+        setCategories(catRes.data || []);
+        
+        const product: Product = prodRes.data;
+        if (product) {
+          setFormData({
+            name: product.name,
+            description: product.description || "",
+            sku: product.sku || "",
+            price: (product.price_cents / 100).toFixed(2),
+            mrp: product.metadata?.mrp_cents ? (product.metadata.mrp_cents / 100).toFixed(2) : "", // Assuming metadata holds MRP
+            stock: product.stock.toString(),
+            weight: product.weight || "",
+            active: product.active,
+            category_ids: product.categories ? product.categories.map(c => c.id) : []
+          });
+        }
+      } catch (err: any) {
+        console.error("Failed to fetch data", err);
+        setError("Failed to load product details");
       } finally {
+        setFetching(false);
         setFetchingCategories(false);
       }
     }
-    fetchCategories();
-  }, []);
+    fetchData();
+  }, [id]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -94,11 +122,6 @@ export default function AddProductPage() {
         setLoading(false);
         return;
     }
-    if (formData.category_ids.length === 0) {
-        setError("Please select at least one category");
-        setLoading(false);
-        return;
-    }
 
     try {
       // Prepare Payload
@@ -110,36 +133,67 @@ export default function AddProductPage() {
         description: formData.description,
         sku: formData.sku,
         price_cents: priceCents,
-        mrp_cents: mrpCents,
+        // stock: parseInt(formData.stock) || 0, // Assuming update endpoint accepts these
         stock: parseInt(formData.stock) || 0,
         weight: formData.weight,
         active: formData.active,
-        category_ids: formData.category_ids
+        category_ids: formData.category_ids,
+        // We might need to handle partial updates or full updates depending on API
+        // For now sending full payload
+        metadata: mrpCents ? { mrp_cents: mrpCents } : undefined
       };
 
-      await api.post("/products", payload);
+      await api.put(`/products/${id}`, payload);
       
-      // Navigate back to dashboard or product list
-      router.push("/"); 
+      router.push("/products"); 
     } catch (err: any) {
-      console.error("Failed to create product", err);
-      setError(err.response?.data?.message || "Failed to create product");
+      console.error("Failed to update product", err);
+      setError(err.response?.data?.message || "Failed to update product");
     } finally {
       setLoading(false);
     }
   };
 
+
+  const handleDelete = async () => {
+    if (!confirm("Are you sure you want to delete this product? This action cannot be undone.")) return;
+    
+    try {
+      setLoading(true);
+      await api.delete(`/products/${id}`);
+      router.push("/products");
+    } catch (err: any) {
+      console.error("Failed to delete product", err);
+      setError("Failed to delete product");
+      setLoading(false);
+    }
+  };
+
+  if (fetching) {
+     return (
+       <div className="flex h-screen items-center justify-center">
+         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+       </div>
+     );
+  }
+
   return (
     <div className="p-8 space-y-8 bg-background min-h-screen">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="outline" size="icon" onClick={() => router.back()}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Add New Product</h1>
-          <p className="text-muted-foreground">Create a new product in your inventory.</p>
-        </div>
+      <div className="flex items-center justify-between">
+         <div className="flex items-center gap-4">
+           <Button variant="outline" size="icon" onClick={() => router.back()}>
+             <ArrowLeft className="h-4 w-4" />
+           </Button>
+           <div>
+             <h1 className="text-3xl font-bold tracking-tight">Edit Product</h1>
+             <p className="text-muted-foreground">Update product details and inventory.</p>
+           </div>
+         </div>
+         <Button variant="destructive" size="sm" onClick={handleDelete}>
+           <Trash2 className="mr-2 h-4 w-4" />
+           Delete Product
+         </Button>
       </div>
 
       <div className="grid gap-8 grid-cols-1 lg:grid-cols-3">
@@ -284,7 +338,7 @@ export default function AddProductPage() {
                  </div>
                ) : categories.length === 0 ? (
                  <p className="text-sm text-yellow-500 flex items-center gap-2">
-                   <AlertCircle className="h-4 w-4" /> No categories found. Please add categories first in the backend.
+                   <AlertCircle className="h-4 w-4" /> No categories found.
                  </p>
                ) : (
                  <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
@@ -307,7 +361,7 @@ export default function AddProductPage() {
            {/* Actions */}
            <Button className="w-full" size="lg" onClick={handleSubmit} disabled={loading}>
              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-             {loading ? "Saving..." : "Save Product"}
+             {loading ? "Updating..." : "Update Product"}
            </Button>
            
            {error && (

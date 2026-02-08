@@ -119,7 +119,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="p-8 space-y-8 bg-background min-h-screen">
+    <div className="space-y-8">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
         <div className="flex gap-2">
@@ -202,7 +202,7 @@ export default function DashboardPage() {
                   <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value}`} />
                   <Tooltip 
                     formatter={(value: any) => [`$${Number(value).toFixed(2)}`, "Sales"]}
-                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                    contentStyle={{ backgroundColor: '#1e1e2e', color: '#f3f4f6', border: '1px solid #374151', borderRadius: '8px' }}
                   />
                   <Area type="monotone" dataKey="sales" stroke="#8884d8" fillOpacity={1} fill="url(#colorSales)" />
                 </AreaChart>
