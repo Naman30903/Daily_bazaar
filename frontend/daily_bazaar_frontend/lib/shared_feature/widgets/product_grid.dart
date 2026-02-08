@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/utils/responsive.dart';
 import 'package:daily_bazaar_frontend/shared_feature/models/product_model.dart';
 
 import 'product_card_browse.dart';
@@ -113,8 +114,12 @@ class _ProductGridState extends State<ProductGrid> {
           SliverPadding(
             padding: const EdgeInsets.all(12),
             sliver: SliverGrid(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: Responsive.isDesktop(context)
+                    ? 5
+                    : Responsive.isTablet(context)
+                    ? 4
+                    : 2,
                 childAspectRatio: 0.58,
                 mainAxisSpacing: 12,
                 crossAxisSpacing: 12,
@@ -231,8 +236,12 @@ class _ProductsGridSkeleton extends StatelessWidget {
 
     return GridView.builder(
       padding: const EdgeInsets.all(12),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: Responsive.isDesktop(context)
+            ? 5
+            : Responsive.isTablet(context)
+            ? 4
+            : 2,
         childAspectRatio: 0.58,
         mainAxisSpacing: 12,
         crossAxisSpacing: 12,

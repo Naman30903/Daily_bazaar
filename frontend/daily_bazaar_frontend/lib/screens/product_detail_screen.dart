@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../shared_feature/constant/product_detail_theme.dart';
+import '../../core/utils/responsive.dart';
 import '../shared_feature/models/product_model.dart';
 import '../shared_feature/widgets/product_detail/product_image_carousel.dart';
 import '../shared_feature/widgets/product_detail/product_info_card.dart';
@@ -147,99 +148,217 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: ProductDetailTheme.backgroundDark,
-      body: Stack(
-        children: [
-          // Scrollable content
-          CustomScrollView(
-            slivers: [
-              // Product image carousel (not a sliver, wrapped)
+      body: Responsive(
+        mobile: _buildMobileLayout(context),
+        tablet: _buildDesktopLayout(context),
+        desktop: _buildDesktopLayout(context),
+      ),
+    );
+  }
+
+  Widget _buildMobileLayout(BuildContext context) {
+    return Stack(
+      children: [
+        // Scrollable content
+        CustomScrollView(
+          slivers: [
+            // Product image carousel (not a sliver, wrapped)
+            SliverToBoxAdapter(
+              child: ProductImageCarousel(
+                imageUrls: _imageUrls,
+                isWishlisted: _isWishlisted,
+                onClose: _handleClose,
+                onWishlistTap: _handleWishlistTap,
+                onSearchTap: _handleSearchTap,
+                onShareTap: _handleShareTap,
+              ),
+            ),
+
+            // Product info card
+            SliverToBoxAdapter(
+              child: ProductInfoCard(
+                name: product.name,
+                weight: product.weight,
+                isVeg: true, // TODO: Get from product metadata
+                deliveryMinutes: product.deliveryMinutes,
+                rating: product.rating,
+                reviewCount: product.reviewCount,
+              ),
+            ),
+
+            // Price section
+            SliverToBoxAdapter(
+              child: PriceSection(
+                price: product.formattedPrice,
+                mrp: product.formattedMrp,
+                discountPercent: product.discountPercent,
+              ),
+            ),
+
+            // Product actions
+            SliverToBoxAdapter(
+              child: ProductActions(
+                isDetailsExpanded: _isDetailsExpanded,
+                onViewDetailsTap: _handleViewDetailsTap,
+                brandName: _brandName,
+                brandLogoUrl: _brandLogoUrl,
+                onExploreBrandTap: _handleExploreBrandTap,
+              ),
+            ),
+
+            // Spacer
+            const SliverToBoxAdapter(
+              child: SizedBox(height: ProductDetailTheme.space16),
+            ),
+
+            // Similar products carousel
+            if (widget.similarProducts.isNotEmpty)
               SliverToBoxAdapter(
-                child: ProductImageCarousel(
-                  imageUrls: _imageUrls,
-                  isWishlisted: _isWishlisted,
-                  onClose: _handleClose,
-                  onWishlistTap: _handleWishlistTap,
-                  onSearchTap: _handleSearchTap,
-                  onShareTap: _handleShareTap,
+                child: SimilarProductsCarousel(
+                  products: widget.similarProducts,
+                  wishlistedIds: _wishlistedSimilarIds,
+                  onProductTap: _handleSimilarProductTap,
+                  onAddTap: _handleSimilarProductAdd,
+                  onWishlistTap: _handleSimilarProductWishlist,
                 ),
               ),
 
-              // Product info card
-              SliverToBoxAdapter(
-                child: ProductInfoCard(
-                  name: product.name,
-                  weight: product.weight,
-                  isVeg: true, // TODO: Get from product metadata
-                  deliveryMinutes: product.deliveryMinutes,
-                  rating: product.rating,
-                  reviewCount: product.reviewCount,
-                ),
+            // Bottom padding for sticky bar
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height:
+                    ProductDetailTheme.stickyBarHeight +
+                    MediaQuery.of(context).padding.bottom +
+                    ProductDetailTheme.space16,
               ),
+            ),
+          ],
+        ),
 
-              // Price section
-              SliverToBoxAdapter(
-                child: PriceSection(
+        // Sticky bottom bar
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: StickyAddToCartBar(
+            price: product.formattedPrice,
+            weight: product.weight,
+            mrp: product.formattedMrp,
+            discountPercent: product.discountPercent,
+            isLoading: _isAddingToCart,
+            onAddToCart: _handleAddToCart,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDesktopLayout(BuildContext context) {
+    // Split view: Image on left, Details on right
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Left side: Image
+        Expanded(
+          flex: 1,
+          child: Container(
+            color: ProductDetailTheme.surfaceElevated,
+            child: ProductImageCarousel(
+              imageUrls: _imageUrls,
+              isWishlisted: _isWishlisted,
+              onClose: _handleClose,
+              onWishlistTap: _handleWishlistTap,
+              onSearchTap: _handleSearchTap,
+              onShareTap: _handleShareTap,
+              height: double.infinity, // Fill the left side
+            ),
+          ),
+        ),
+        // Right side: Details + Sticky Bar
+        Expanded(
+          flex: 1,
+          child: Stack(
+            children: [
+              CustomScrollView(
+                slivers: [
+                  // Product info card
+                  SliverToBoxAdapter(
+                    child: ProductInfoCard(
+                      name: product.name,
+                      weight: product.weight,
+                      isVeg: true,
+                      deliveryMinutes: product.deliveryMinutes,
+                      rating: product.rating,
+                      reviewCount: product.reviewCount,
+                    ),
+                  ),
+
+                  // Price section
+                  SliverToBoxAdapter(
+                    child: PriceSection(
+                      price: product.formattedPrice,
+                      mrp: product.formattedMrp,
+                      discountPercent: product.discountPercent,
+                    ),
+                  ),
+
+                  // Product actions
+                  SliverToBoxAdapter(
+                    child: ProductActions(
+                      isDetailsExpanded: _isDetailsExpanded,
+                      onViewDetailsTap: _handleViewDetailsTap,
+                      brandName: _brandName,
+                      brandLogoUrl: _brandLogoUrl,
+                      onExploreBrandTap: _handleExploreBrandTap,
+                    ),
+                  ),
+
+                  // Spacer
+                  const SliverToBoxAdapter(
+                    child: SizedBox(height: ProductDetailTheme.space16),
+                  ),
+
+                  // Similar products carousel
+                  if (widget.similarProducts.isNotEmpty)
+                    SliverToBoxAdapter(
+                      child: SimilarProductsCarousel(
+                        products: widget.similarProducts,
+                        wishlistedIds: _wishlistedSimilarIds,
+                        onProductTap: _handleSimilarProductTap,
+                        onAddTap: _handleSimilarProductAdd,
+                        onWishlistTap: _handleSimilarProductWishlist,
+                      ),
+                    ),
+
+                  // Bottom padding for sticky bar
+                  SliverToBoxAdapter(
+                    child: SizedBox(
+                      height:
+                          ProductDetailTheme.stickyBarHeight +
+                          MediaQuery.of(context).padding.bottom +
+                          ProductDetailTheme.space16,
+                    ),
+                  ),
+                ],
+              ),
+              // Sticky bottom bar
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: StickyAddToCartBar(
                   price: product.formattedPrice,
+                  weight: product.weight,
                   mrp: product.formattedMrp,
                   discountPercent: product.discountPercent,
-                ),
-              ),
-
-              // Product actions
-              SliverToBoxAdapter(
-                child: ProductActions(
-                  isDetailsExpanded: _isDetailsExpanded,
-                  onViewDetailsTap: _handleViewDetailsTap,
-                  brandName: _brandName,
-                  brandLogoUrl: _brandLogoUrl,
-                  onExploreBrandTap: _handleExploreBrandTap,
-                ),
-              ),
-
-              // Spacer
-              const SliverToBoxAdapter(
-                child: SizedBox(height: ProductDetailTheme.space16),
-              ),
-
-              // Similar products carousel
-              if (widget.similarProducts.isNotEmpty)
-                SliverToBoxAdapter(
-                  child: SimilarProductsCarousel(
-                    products: widget.similarProducts,
-                    wishlistedIds: _wishlistedSimilarIds,
-                    onProductTap: _handleSimilarProductTap,
-                    onAddTap: _handleSimilarProductAdd,
-                    onWishlistTap: _handleSimilarProductWishlist,
-                  ),
-                ),
-
-              // Bottom padding for sticky bar
-              SliverToBoxAdapter(
-                child: SizedBox(
-                  height: ProductDetailTheme.stickyBarHeight +
-                      MediaQuery.of(context).padding.bottom +
-                      ProductDetailTheme.space16,
+                  isLoading: _isAddingToCart,
+                  onAddToCart: _handleAddToCart,
                 ),
               ),
             ],
           ),
-
-          // Sticky bottom bar
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: StickyAddToCartBar(
-              price: product.formattedPrice,
-              weight: product.weight,
-              mrp: product.formattedMrp,
-              discountPercent: product.discountPercent,
-              isLoading: _isAddingToCart,
-              onAddToCart: _handleAddToCart,
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

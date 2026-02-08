@@ -46,7 +46,7 @@ class ProductCardBrowse extends StatelessWidget {
           children: [
             // Product image with wishlist button
             Expanded(
-              flex: 3,
+              flex: 4,
               child: Stack(
                 children: [
                   // Image
@@ -115,9 +115,9 @@ class ProductCardBrowse extends StatelessWidget {
             ),
             // Product info
             Expanded(
-              flex: 2,
+              flex: 3,
               child: Padding(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

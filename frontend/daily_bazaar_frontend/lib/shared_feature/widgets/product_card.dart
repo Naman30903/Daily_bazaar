@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/home_models.dart';
+import '../../core/utils/responsive.dart';
 
 class ProductCard extends StatelessWidget {
   const ProductCard({
@@ -17,11 +18,24 @@ class ProductCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
 
+    final isTablet = Responsive.isTablet(context);
+    final isDesktop = Responsive.isDesktop(context);
+    final cardWidth = isDesktop
+        ? 180.0
+        : isTablet
+        ? 160.0
+        : 140.0;
+    final imageHeight = isDesktop
+        ? 130.0
+        : isTablet
+        ? 115.0
+        : 100.0;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        width: 140,
+        width: cardWidth,
         decoration: BoxDecoration(
           color: cs.surfaceContainerHighest.withValues(alpha: 0.3),
           borderRadius: BorderRadius.circular(12),
@@ -32,7 +46,7 @@ class ProductCard extends StatelessWidget {
           children: [
             // Image placeholder
             Container(
-              height: 100,
+              height: imageHeight,
               decoration: BoxDecoration(
                 color: cs.surfaceContainerHigh,
                 borderRadius: const BorderRadius.vertical(
@@ -61,7 +75,8 @@ class ProductCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
-                  Row(
+                  Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       Text(
                         '₹${product.price.toStringAsFixed(0)}',

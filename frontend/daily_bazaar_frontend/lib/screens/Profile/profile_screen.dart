@@ -63,120 +63,130 @@ class ProfilePage extends ConsumerWidget {
           onRefresh: () async {
             await ref.read(userControllerProvider.notifier).refresh();
           },
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-            children: [
-              _ProfileHeader(name: data.user.fullName, phone: data.user.phone),
-              const SizedBox(height: 14),
-              Row(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 800),
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
                 children: [
-                  Expanded(
-                    child: _QuickActionCard(
-                      icon: Icons.shopping_bag_outlined,
-                      label: 'Your orders',
-                      onTap: () {},
+                  _ProfileHeader(
+                    name: data.user.fullName,
+                    phone: data.user.phone,
+                  ),
+                  const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _QuickActionCard(
+                          icon: Icons.shopping_bag_outlined,
+                          label: 'Your orders',
+                          onTap: () {},
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _QuickActionCard(
+                          icon: Icons.account_balance_wallet_outlined,
+                          label: 'Wallet',
+                          onTap: () {},
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _QuickActionCard(
+                          icon: Icons.support_agent_outlined,
+                          label: 'Need help?',
+                          onTap: () {},
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
+                  _SectionTitle(title: 'Your information'),
+                  const SizedBox(height: 10),
+                  _SettingsCard(
+                    children: [
+                      _SettingsTile(
+                        icon: Icons.location_on_outlined,
+                        title: 'Address book',
+                        subtitle: data.addresses.isNotEmpty
+                            ? '${data.addresses.length} ${data.addresses.length == 1 ? 'address' : 'addresses'}'
+                            : null,
+                        onTap: () => Navigator.of(
+                          context,
+                        ).pushReplacementNamed(Routes.addresses),
+                      ),
+                      const _Divider(),
+                      const _SettingsTile(
+                        icon: Icons.favorite_border,
+                        title: 'Your wishlist',
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
+                  _SectionTitle(title: 'Other information'),
+                  const SizedBox(height: 10),
+                  _SettingsCard(
+                    children: [
+                      const _SettingsTile(
+                        icon: Icons.share_outlined,
+                        title: 'Share the app',
+                      ),
+                      const _Divider(),
+                      const _SettingsTile(
+                        icon: Icons.info_outline,
+                        title: 'About us',
+                      ),
+                      const _Divider(),
+                      const _SettingsTile(
+                        icon: Icons.lock_outline,
+                        title: 'Account privacy',
+                      ),
+                      const _Divider(),
+                      const _SettingsTile(
+                        icon: Icons.notifications_none_outlined,
+                        title: 'Notification preferences',
+                      ),
+                      const _Divider(),
+                      _SettingsTile(
+                        icon: Icons.logout,
+                        title: 'Log out',
+                        isDestructive: true,
+                        onTap: () async {
+                          await TokenStorage.clearToken();
+                          if (context.mounted) {
+                            showAppSnackBar(context, 'Logged out');
+                            Navigator.of(
+                              context,
+                            ).pushReplacementNamed('/login');
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
+                  Center(
+                    child: Text(
+                      'daily bazaar',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: cs.onSurfaceVariant.withValues(alpha: 0.35),
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.2,
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _QuickActionCard(
-                      icon: Icons.account_balance_wallet_outlined,
-                      label: 'Wallet',
-                      onTap: () {},
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _QuickActionCard(
-                      icon: Icons.support_agent_outlined,
-                      label: 'Need help?',
-                      onTap: () {},
+                  const SizedBox(height: 6),
+                  Center(
+                    child: Text(
+                      'v1.0.0',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: cs.onSurfaceVariant.withValues(alpha: 0.35),
+                      ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 18),
-              _SectionTitle(title: 'Your information'),
-              const SizedBox(height: 10),
-              _SettingsCard(
-                children: [
-                  _SettingsTile(
-                    icon: Icons.location_on_outlined,
-                    title: 'Address book',
-                    subtitle: data.addresses.isNotEmpty
-                        ? '${data.addresses.length} ${data.addresses.length == 1 ? 'address' : 'addresses'}'
-                        : null,
-                    onTap: () => Navigator.of(
-                      context,
-                    ).pushReplacementNamed(Routes.addresses),
-                  ),
-                  const _Divider(),
-                  const _SettingsTile(
-                    icon: Icons.favorite_border,
-                    title: 'Your wishlist',
-                  ),
-                ],
-              ),
-              const SizedBox(height: 18),
-              _SectionTitle(title: 'Other information'),
-              const SizedBox(height: 10),
-              _SettingsCard(
-                children: [
-                  const _SettingsTile(
-                    icon: Icons.share_outlined,
-                    title: 'Share the app',
-                  ),
-                  const _Divider(),
-                  const _SettingsTile(
-                    icon: Icons.info_outline,
-                    title: 'About us',
-                  ),
-                  const _Divider(),
-                  const _SettingsTile(
-                    icon: Icons.lock_outline,
-                    title: 'Account privacy',
-                  ),
-                  const _Divider(),
-                  const _SettingsTile(
-                    icon: Icons.notifications_none_outlined,
-                    title: 'Notification preferences',
-                  ),
-                  const _Divider(),
-                  _SettingsTile(
-                    icon: Icons.logout,
-                    title: 'Log out',
-                    isDestructive: true,
-                    onTap: () async {
-                      await TokenStorage.clearToken();
-                      if (context.mounted) {
-                        showAppSnackBar(context, 'Logged out');
-                        Navigator.of(context).pushReplacementNamed('/login');
-                      }
-                    },
-                  ),
-                ],
-              ),
-              const SizedBox(height: 18),
-              Center(
-                child: Text(
-                  'daily bazaar',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: cs.onSurfaceVariant.withValues(alpha: 0.35),
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.2,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 6),
-              Center(
-                child: Text(
-                  'v1.0.0',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: cs.onSurfaceVariant.withValues(alpha: 0.35),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),

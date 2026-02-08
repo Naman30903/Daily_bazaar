@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/home_models.dart';
+import '../../core/utils/responsive.dart';
 
 class CategoryGridSection extends StatelessWidget {
   const CategoryGridSection({
@@ -42,12 +43,15 @@ class CategoryGridSection extends StatelessWidget {
           child: GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 4,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: Responsive.isDesktop(context)
+                  ? 8
+                  : Responsive.isTablet(context)
+                  ? 6
+                  : 4,
               mainAxisSpacing: 8,
               crossAxisSpacing: 8,
-              childAspectRatio:
-                  0.6, // Taller to accommodate text without overflow
+              childAspectRatio: 0.6,
             ),
             itemCount: categories.length > 8 ? 8 : categories.length,
             itemBuilder: (context, index) {

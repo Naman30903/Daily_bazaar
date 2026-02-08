@@ -1,14 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:daily_bazaar_frontend/shared_feature/api/user_api.dart';
-import 'package:daily_bazaar_frontend/shared_feature/helper/api_exception.dart';
 import 'package:daily_bazaar_frontend/shared_feature/models/address_model.dart';
-import 'package:daily_bazaar_frontend/shared_feature/config/config.dart';
-import 'package:daily_bazaar_frontend/shared_feature/config/hive.dart';
 import 'package:daily_bazaar_frontend/shared_feature/widgets/snackbar.dart';
 import 'package:daily_bazaar_frontend/shared_feature/provider/user_provider.dart';
-import 'package:daily_bazaar_frontend/shared_feature/provider/user_provider.dart'
-    as _up;
 
 class AddressesPage extends ConsumerStatefulWidget {
   const AddressesPage({super.key});
@@ -80,70 +74,80 @@ class _AddressesPageState extends ConsumerState<AddressesPage> {
             : RefreshIndicator(
                 onRefresh: () async =>
                     ref.read(userControllerProvider.notifier).refresh(),
-                child: ListView.separated(
-                  padding: const EdgeInsets.all(12),
-                  itemCount: data.addresses.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
-                  itemBuilder: (ctx, i) {
-                    final a = data.addresses[i];
-                    return Card(
-                      child: ListTile(
-                        leading: a.isDefault
-                            ? Icon(Icons.check_circle, color: cs.primary)
-                            : Icon(
-                                Icons.location_on_outlined,
-                                color: cs.onSurfaceVariant,
-                              ),
-                        title: Row(
-                          children: [
-                            Expanded(child: Text(a.label ?? a.fullName)),
-                            if (a.isDefault)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: cs.primaryContainer.withValues(
-                                    alpha: 0.45,
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 800),
+                    child: ListView.separated(
+                      padding: const EdgeInsets.all(12),
+                      itemCount: data.addresses.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      itemBuilder: (ctx, i) {
+                        final a = data.addresses[i];
+                        return Card(
+                          child: ListTile(
+                            leading: a.isDefault
+                                ? Icon(Icons.check_circle, color: cs.primary)
+                                : Icon(
+                                    Icons.location_on_outlined,
+                                    color: cs.onSurfaceVariant,
                                   ),
-                                  borderRadius: BorderRadius.circular(999),
-                                  border: Border.all(
-                                    color: cs.outlineVariant.withValues(
-                                      alpha: 0.4,
+                            title: Row(
+                              children: [
+                                Expanded(child: Text(a.label ?? a.fullName)),
+                                if (a.isDefault)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: cs.primaryContainer.withValues(
+                                        alpha: 0.45,
+                                      ),
+                                      borderRadius: BorderRadius.circular(999),
+                                      border: Border.all(
+                                        color: cs.outlineVariant.withValues(
+                                          alpha: 0.4,
+                                        ),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      'Default',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelSmall
+                                          ?.copyWith(
+                                            color: cs.primary,
+                                            fontWeight: FontWeight.w700,
+                                          ),
                                     ),
                                   ),
-                                ),
-                                child: Text(
-                                  'Default',
-                                  style: Theme.of(context).textTheme.labelSmall
-                                      ?.copyWith(
-                                        color: cs.primary,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                ),
-                              ),
-                          ],
-                        ),
-                        subtitle: Text(a.formattedAddress),
-                        isThreeLine: true,
-                        trailing: PopupMenuButton<String>(
-                          onSelected: (v) async {
-                            if (v == 'edit') _showAddressSheet(existing: a);
-                            if (v == 'delete') _confirmDelete(a);
-                          },
-                          itemBuilder: (_) => const [
-                            PopupMenuItem(value: 'edit', child: Text('Edit')),
-                            PopupMenuItem(
-                              value: 'delete',
-                              child: Text('Delete'),
+                              ],
                             ),
-                          ],
-                        ),
-                        onTap: () => _showAddressSheet(existing: a),
-                      ),
-                    );
-                  },
+                            subtitle: Text(a.formattedAddress),
+                            isThreeLine: true,
+                            trailing: PopupMenuButton<String>(
+                              onSelected: (v) async {
+                                if (v == 'edit') _showAddressSheet(existing: a);
+                                if (v == 'delete') _confirmDelete(a);
+                              },
+                              itemBuilder: (_) => const [
+                                PopupMenuItem(
+                                  value: 'edit',
+                                  child: Text('Edit'),
+                                ),
+                                PopupMenuItem(
+                                  value: 'delete',
+                                  child: Text('Delete'),
+                                ),
+                              ],
+                            ),
+                            onTap: () => _showAddressSheet(existing: a),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
                 ),
               ),
       ),

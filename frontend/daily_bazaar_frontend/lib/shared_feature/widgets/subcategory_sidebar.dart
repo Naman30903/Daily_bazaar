@@ -10,6 +10,7 @@ class SubcategorySidebar extends StatelessWidget {
     required this.isLoading,
     this.error,
     required this.onSubcategoryTap,
+    this.direction = Axis.vertical,
   });
 
   final List<Category> subcategories;
@@ -17,6 +18,7 @@ class SubcategorySidebar extends StatelessWidget {
   final bool isLoading;
   final String? error;
   final ValueChanged<Category> onSubcategoryTap;
+  final Axis direction;
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +62,8 @@ class SubcategorySidebar extends StatelessWidget {
     return Container(
       color: cs.surfaceContainerLowest,
       child: ListView.builder(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        scrollDirection: direction,
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
         itemCount: subcategories.length,
         itemBuilder: (context, index) {
           final subcategory = subcategories[index];

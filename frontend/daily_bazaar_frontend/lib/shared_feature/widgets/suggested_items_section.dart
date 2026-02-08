@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/home_models.dart';
 import 'product_card.dart';
+import '../../core/utils/responsive.dart';
 
 class SuggestedItemsSection extends StatelessWidget {
   const SuggestedItemsSection({
@@ -40,7 +41,11 @@ class SuggestedItemsSection extends StatelessWidget {
           ),
         ),
         SizedBox(
-          height: 220,
+          height: Responsive.isDesktop(context)
+              ? 300
+              : Responsive.isTablet(context)
+              ? 270
+              : 250,
           child: ListView.builder(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             scrollDirection: Axis.horizontal,

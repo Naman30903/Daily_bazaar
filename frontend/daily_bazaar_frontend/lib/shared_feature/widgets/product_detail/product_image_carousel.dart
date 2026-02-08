@@ -13,7 +13,10 @@ class ProductImageCarousel extends StatefulWidget {
     this.onSearchTap,
     this.onShareTap,
     this.isWishlisted = false,
+    this.height,
   });
+
+  final double? height;
 
   final List<String> imageUrls;
   final VoidCallback? onClose;
@@ -65,7 +68,7 @@ class _ProductImageCarouselState extends State<ProductImageCarousel> {
     final hasImages = widget.imageUrls.isNotEmpty;
 
     return Container(
-      height: ProductDetailTheme.carouselHeight,
+      height: widget.height ?? ProductDetailTheme.carouselHeight,
       color: ProductDetailTheme.surfaceElevated,
       child: Stack(
         children: [
@@ -81,14 +84,15 @@ class _ProductImageCarouselState extends State<ProductImageCarousel> {
                   child: Image.network(
                     widget.imageUrls[index],
                     fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
+                    errorBuilder: (context, error, stackTrace) =>
+                        _buildPlaceholder(),
                     loadingBuilder: (context, child, loadingProgress) {
                       if (loadingProgress == null) return child;
                       return Center(
                         child: CircularProgressIndicator(
                           value: loadingProgress.expectedTotalBytes != null
                               ? loadingProgress.cumulativeBytesLoaded /
-                                  loadingProgress.expectedTotalBytes!
+                                    loadingProgress.expectedTotalBytes!
                               : null,
                           strokeWidth: 2,
                           color: ProductDetailTheme.primaryGreen,
@@ -214,11 +218,7 @@ class _ProductImageCarouselState extends State<ProductImageCarousel> {
 }
 
 class _ActionButton extends StatelessWidget {
-  const _ActionButton({
-    required this.icon,
-    this.onTap,
-    this.iconColor,
-  });
+  const _ActionButton({required this.icon, this.onTap, this.iconColor});
 
   final IconData icon;
   final VoidCallback? onTap;
@@ -247,10 +247,7 @@ class _ActionButton extends StatelessWidget {
 }
 
 class _NavigationArrow extends StatelessWidget {
-  const _NavigationArrow({
-    required this.icon,
-    this.onTap,
-  });
+  const _NavigationArrow({required this.icon, this.onTap});
 
   final IconData icon;
   final VoidCallback? onTap;

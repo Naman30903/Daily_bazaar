@@ -1,3 +1,4 @@
+import '../../core/utils/responsive.dart';
 import 'package:daily_bazaar_frontend/screens/product_detail_screen.dart';
 import 'package:daily_bazaar_frontend/shared_feature/provider/cart_provider.dart';
 import 'package:daily_bazaar_frontend/shared_feature/widgets/product_grid.dart';
@@ -36,90 +37,119 @@ class CategoryBrowsePage extends ConsumerWidget {
         ],
       ),
       body: browseState.when(
-        data: (state) => Row(
-          children: [
-            // Left Sidebar (20-25% width)
-            SizedBox(
-              width: MediaQuery.of(context).size.width * 0.22,
-              child: SubcategorySidebar(
-                subcategories: state.subcategories,
-                selectedId: state.selectedSubcategoryId,
-                isLoading: state.isLoadingSubcategories,
-                error: state.subcategoriesError,
-                onSubcategoryTap: (subcategory) {
-                  ref
-                      .read(
-                        categoryBrowseControllerProvider(
-                          parentCategory.id,
-                        ).notifier,
-                      )
-                      .selectSubcategory(subcategory.id);
-                },
-              ),
+        data: (state) {
+          final sidebar = SubcategorySidebar(
+            subcategories: state.subcategories,
+            selectedId: state.selectedSubcategoryId,
+            isLoading: state.isLoadingSubcategories,
+            error: state.subcategoriesError,
+            direction:
+                Responsive.isDesktop(context) || Responsive.isTablet(context)
+                ? Axis.vertical
+                : Axis.horizontal,
+            onSubcategoryTap: (subcategory) {
+              ref
+                  .read(
+                    categoryBrowseControllerProvider(
+                      parentCategory.id,
+                    ).notifier,
+                  )
+                  .selectSubcategory(subcategory.id);
+            },
+          );
+
+          final productGrid = ProductGrid(
+            products: state.products,
+            isLoading: state.isLoadingProducts,
+            error: state.productsError,
+            hasMore: state.hasMoreProducts,
+            onLoadMore: () {
+              ref
+                  .read(
+                    categoryBrowseControllerProvider(
+                      parentCategory.id,
+                    ).notifier,
+                  )
+                  .loadMoreProducts();
+            },
+            onRefresh: () async {
+              await ref
+                  .read(
+                    categoryBrowseControllerProvider(
+                      parentCategory.id,
+                    ).notifier,
+                  )
+                  .refreshProducts();
+            },
+            onAddToCart: (product) {
+              cartController.addToCart(product);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('${product.name} added to cart'),
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            },
+            getCartQuantity: (productId) => cartState.getQuantity(productId),
+            onIncrementCart: (product) =>
+                cartController.incrementQuantity(product.id),
+            onDecrementCart: (product) =>
+                cartController.decrementQuantity(product.id),
+            onProductTap: (product) {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => ProductDetailScreen(
+                    product: product,
+                    similarProducts: state.products
+                        .where((p) => p.id != product.id)
+                        .take(5)
+                        .toList(),
+                  ),
+                ),
+              );
+            },
+          );
+
+          return Responsive(
+            mobile: Column(
+              children: [
+                SizedBox(
+                  height: 100, // Fixed height for horizontal list
+                  child: sidebar,
+                ),
+                Expanded(child: productGrid),
+              ],
             ),
-            // Divider
-            VerticalDivider(
-              width: 1,
-              thickness: 1,
-              color: cs.outlineVariant.withValues(alpha: 0.3),
+            tablet: Row(
+              children: [
+                SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.25,
+                  child: sidebar,
+                ),
+                VerticalDivider(
+                  width: 1,
+                  thickness: 1,
+                  color: cs.outlineVariant.withValues(alpha: 0.3),
+                ),
+                Expanded(child: productGrid),
+              ],
             ),
-            // Right Panel (75-80% width)
-            Expanded(
-              child: ProductGrid(
-                products: state.products,
-                isLoading: state.isLoadingProducts,
-                error: state.productsError,
-                hasMore: state.hasMoreProducts,
-                onLoadMore: () {
-                  ref
-                      .read(
-                        categoryBrowseControllerProvider(
-                          parentCategory.id,
-                        ).notifier,
-                      )
-                      .loadMoreProducts();
-                },
-                onRefresh: () async {
-                  await ref
-                      .read(
-                        categoryBrowseControllerProvider(
-                          parentCategory.id,
-                        ).notifier,
-                      )
-                      .refreshProducts();
-                },
-                onAddToCart: (product) {
-                  cartController.addToCart(product);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('${product.name} added to cart'),
-                      duration: const Duration(seconds: 2),
-                    ),
-                  );
-                },
-                getCartQuantity: (productId) =>
-                    cartState.getQuantity(productId),
-                onIncrementCart: (product) =>
-                    cartController.incrementQuantity(product.id),
-                onDecrementCart: (product) =>
-                    cartController.decrementQuantity(product.id),
-                onProductTap: (product) {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => ProductDetailScreen(
-                        product: product,
-                        similarProducts: state.products
-                            .where((p) => p.id != product.id)
-                            .take(5)
-                            .toList(),
-                      ),
-                    ),
-                  );
-                },
-              ),
+            desktop: Row(
+              children: [
+                SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.22,
+                  child: sidebar,
+                ),
+                VerticalDivider(
+                  width: 1,
+                  thickness: 1,
+                  color: cs.outlineVariant.withValues(alpha: 0.3),
+                ),
+                Expanded(child: productGrid),
+              ],
             ),
-          ],
-        ),
+          );
+        },
         loading: () => const _LoadingSkeleton(),
         error: (e, _) => _ErrorState(
           message: e.toString(),
@@ -138,7 +168,75 @@ class _LoadingSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final isMobile = Responsive.isMobile(context);
 
+    if (isMobile) {
+      return Column(
+        children: [
+          // Horizontal Sidebar skeleton
+          SizedBox(
+            height: 100,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              itemCount: 8,
+              itemBuilder: (_, _) => Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 10,
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: cs.surfaceContainerHighest.withValues(
+                          alpha: 0.3,
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      width: 48,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: cs.surfaceContainerHighest.withValues(
+                          alpha: 0.3,
+                        ),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          // Products skeleton
+          Expanded(
+            child: GridView.builder(
+              padding: const EdgeInsets.all(12),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 0.65,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+              ),
+              itemCount: 6,
+              itemBuilder: (_, _) => Container(
+                decoration: BoxDecoration(
+                  color: cs.surfaceContainerHighest.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    // Desktop/Tablet Skeleton
     return Row(
       children: [
         // Sidebar skeleton
@@ -183,12 +281,12 @@ class _LoadingSkeleton extends StatelessWidget {
           child: GridView.builder(
             padding: const EdgeInsets.all(12),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
+              crossAxisCount: 4, // More columns for desktop
               childAspectRatio: 0.65,
               mainAxisSpacing: 12,
               crossAxisSpacing: 12,
             ),
-            itemCount: 6,
+            itemCount: 8,
             itemBuilder: (_, _) => Container(
               decoration: BoxDecoration(
                 color: cs.surfaceContainerHighest.withValues(alpha: 0.2),

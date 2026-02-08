@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/home_models.dart';
+import '../../core/utils/responsive.dart';
 
 class OffersCarousel extends StatefulWidget {
   const OffersCarousel({super.key, required this.offers, this.onOfferTap});
@@ -12,25 +13,31 @@ class OffersCarousel extends StatefulWidget {
 }
 
 class _OffersCarouselState extends State<OffersCarousel> {
-  final PageController _pageController = PageController(viewportFraction: 0.9);
   int _currentPage = 0;
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
 
+    final isTablet = Responsive.isTablet(context);
+    final isDesktop = Responsive.isDesktop(context);
+
     return Column(
       children: [
         SizedBox(
-          height: 160,
+          height: isDesktop
+              ? 240
+              : isTablet
+              ? 200
+              : 160,
           child: PageView.builder(
-            controller: _pageController,
+            controller: PageController(
+              viewportFraction: isDesktop
+                  ? 0.4
+                  : isTablet
+                  ? 0.6
+                  : 0.9,
+            ),
             onPageChanged: (index) => setState(() => _currentPage = index),
             itemCount: widget.offers.length,
             itemBuilder: (context, index) {

@@ -1,4 +1,5 @@
 import 'package:daily_bazaar_frontend/routes/route.dart';
+import '../core/utils/responsive.dart';
 import 'package:daily_bazaar_frontend/shared_feature/models/category_model.dart';
 import 'package:daily_bazaar_frontend/shared_feature/models/home_models.dart';
 import 'package:daily_bazaar_frontend/shared_feature/provider/category_provider.dart';
@@ -122,120 +123,128 @@ class _HomePageState extends ConsumerState<HomePage> {
           // TODO: show address selection
         },
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            SearchBarWidget(
-              onTap: () {
-                // TODO: navigate to search page
-              },
-            ),
-            const SizedBox(height: 8),
-            OffersCarousel(
-              offers: _offers,
-              onOfferTap: (offer) {
-                // TODO: handle offer tap
-              },
-            ),
-            const SizedBox(height: 16),
-            SuggestedItemsSection(
-              products: _suggestedProducts,
-              onProductTap: (product) {
-                // TODO: navigate to product detail
-              },
-              onAddToCart: (product) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('${product.name} added to cart'),
-                    duration: const Duration(seconds: 2),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: Responsive.isDesktop(context) ? 1000 : 800,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                SearchBarWidget(
+                  onTap: () {
+                    // TODO: navigate to search page
+                  },
+                ),
+                const SizedBox(height: 8),
+                OffersCarousel(
+                  offers: _offers,
+                  onOfferTap: (offer) {
+                    // TODO: handle offer tap
+                  },
+                ),
+                const SizedBox(height: 16),
+                SuggestedItemsSection(
+                  products: _suggestedProducts,
+                  onProductTap: (product) {
+                    // TODO: navigate to product detail
+                  },
+                  onAddToCart: (product) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('${product.name} added to cart'),
+                        duration: const Duration(seconds: 2),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+
+                // Grocery & Kitchen (positions 1..8)
+                groceryAsync.when(
+                  data: (cats) => CategoryGridSection(
+                    title: 'Grocery & Kitchen',
+                    categories: _mapToItems(cats, fallbackColor: 0xFFE3F2FD),
+                    onCategoryTap: (categoryItem) {
+                      // Find the original Category from the list
+                      final category = cats.firstWhere(
+                        (c) => c.id == categoryItem.id,
+                      );
+                      Navigator.of(
+                        context,
+                      ).pushNamed(Routes.categoryBrowse, arguments: category);
+                    },
                   ),
-                );
-              },
-            ),
-            const SizedBox(height: 16),
-
-            // Grocery & Kitchen (positions 1..8)
-            groceryAsync.when(
-              data: (cats) => CategoryGridSection(
-                title: 'Grocery & Kitchen',
-                categories: _mapToItems(cats, fallbackColor: 0xFFE3F2FD),
-                onCategoryTap: (categoryItem) {
-                  // Find the original Category from the list
-                  final category = cats.firstWhere(
-                    (c) => c.id == categoryItem.id,
-                  );
-                  Navigator.of(
-                    context,
-                  ).pushNamed(Routes.categoryBrowse, arguments: category);
-                },
-              ),
-              loading: () =>
-                  const _CategorySectionSkeleton(title: 'Grocery & Kitchen'),
-              error: (e, _) => _CategorySectionError(
-                title: 'Grocery & Kitchen',
-                message: e.toString(),
-                onRetry: () => ref.invalidate(
-                  filteredRootCategoriesProvider(_groceryRange),
+                  loading: () => const _CategorySectionSkeleton(
+                    title: 'Grocery & Kitchen',
+                  ),
+                  error: (e, _) => _CategorySectionError(
+                    title: 'Grocery & Kitchen',
+                    message: e.toString(),
+                    onRetry: () => ref.invalidate(
+                      filteredRootCategoriesProvider(_groceryRange),
+                    ),
+                  ),
                 ),
-              ),
-            ),
 
-            const SizedBox(height: 16),
+                const SizedBox(height: 16),
 
-            // Snacks & Drinks (positions 9..16)
-            snacksAsync.when(
-              data: (cats) => CategoryGridSection(
-                title: 'Snacks & Drinks',
-                categories: _mapToItems(cats, fallbackColor: 0xFFFFE0B2),
-                onCategoryTap: (categoryItem) {
-                  final category = cats.firstWhere(
-                    (c) => c.id == categoryItem.id,
-                  );
-                  Navigator.of(
-                    context,
-                  ).pushNamed(Routes.categoryBrowse, arguments: category);
-                },
-              ),
-              loading: () =>
-                  const _CategorySectionSkeleton(title: 'Snacks & Drinks'),
-              error: (e, _) => _CategorySectionError(
-                title: 'Snacks & Drinks',
-                message: e.toString(),
-                onRetry: () => ref.invalidate(
-                  filteredRootCategoriesProvider(_snacksRange),
+                // Snacks & Drinks (positions 9..16)
+                snacksAsync.when(
+                  data: (cats) => CategoryGridSection(
+                    title: 'Snacks & Drinks',
+                    categories: _mapToItems(cats, fallbackColor: 0xFFFFE0B2),
+                    onCategoryTap: (categoryItem) {
+                      final category = cats.firstWhere(
+                        (c) => c.id == categoryItem.id,
+                      );
+                      Navigator.of(
+                        context,
+                      ).pushNamed(Routes.categoryBrowse, arguments: category);
+                    },
+                  ),
+                  loading: () =>
+                      const _CategorySectionSkeleton(title: 'Snacks & Drinks'),
+                  error: (e, _) => _CategorySectionError(
+                    title: 'Snacks & Drinks',
+                    message: e.toString(),
+                    onRetry: () => ref.invalidate(
+                      filteredRootCategoriesProvider(_snacksRange),
+                    ),
+                  ),
                 ),
-              ),
-            ),
 
-            const SizedBox(height: 16),
+                const SizedBox(height: 16),
 
-            // Personal Care (positions 17..24)
-            personalAsync.when(
-              data: (cats) => CategoryGridSection(
-                title: 'Personal Care',
-                categories: _mapToItems(cats, fallbackColor: 0xFFE1F5FE),
-                onCategoryTap: (categoryItem) {
-                  final category = cats.firstWhere(
-                    (c) => c.id == categoryItem.id,
-                  );
-                  Navigator.of(
-                    context,
-                  ).pushNamed(Routes.categoryBrowse, arguments: category);
-                },
-              ),
-              loading: () =>
-                  const _CategorySectionSkeleton(title: 'Personal Care'),
-              error: (e, _) => _CategorySectionError(
-                title: 'Personal Care',
-                message: e.toString(),
-                onRetry: () => ref.invalidate(
-                  filteredRootCategoriesProvider(_personalCareRange),
+                // Personal Care (positions 17..24)
+                personalAsync.when(
+                  data: (cats) => CategoryGridSection(
+                    title: 'Personal Care',
+                    categories: _mapToItems(cats, fallbackColor: 0xFFE1F5FE),
+                    onCategoryTap: (categoryItem) {
+                      final category = cats.firstWhere(
+                        (c) => c.id == categoryItem.id,
+                      );
+                      Navigator.of(
+                        context,
+                      ).pushNamed(Routes.categoryBrowse, arguments: category);
+                    },
+                  ),
+                  loading: () =>
+                      const _CategorySectionSkeleton(title: 'Personal Care'),
+                  error: (e, _) => _CategorySectionError(
+                    title: 'Personal Care',
+                    message: e.toString(),
+                    onRetry: () => ref.invalidate(
+                      filteredRootCategoriesProvider(_personalCareRange),
+                    ),
+                  ),
                 ),
-              ),
-            ),
 
-            const SizedBox(height: 24),
-          ],
+                const SizedBox(height: 24),
+              ],
+            ),
+          ),
         ),
       ),
       floatingActionButton: cartState.isEmpty
