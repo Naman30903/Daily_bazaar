@@ -23,4 +23,28 @@ class AuthApi {
     );
     return AuthResponse.fromJson(json);
   }
+
+  /// Go backend endpoint: POST /api/auth/forgot-password
+  Future<Map<String, dynamic>> forgotPassword(String email) async {
+    return await _client.postJson(
+      '/api/auth/forgot-password',
+      body: {'email': email},
+    );
+  }
+
+  /// Go backend endpoint: POST /api/auth/reset-password
+  Future<Map<String, dynamic>> resetPassword({
+    required String email,
+    required String otp,
+    required String newPassword,
+  }) async {
+    return await _client.postJson(
+      '/api/auth/reset-password',
+      body: {
+        'email': email,
+        'otp': otp,
+        'new_password': newPassword,
+      },
+    );
+  }
 }

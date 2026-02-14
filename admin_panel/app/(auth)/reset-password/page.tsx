@@ -7,14 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Lock, Loader2, ArrowLeft, CheckCircle2, Eye, EyeOff } from "lucide-react";
+import { Lock, Loader2, ArrowLeft, CheckCircle2, Eye, EyeOff, KeyRound } from "lucide-react";
 import api from "@/lib/api";
 
 function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const token = searchParams.get("token");
+  const emailFromQuery = searchParams.get("email") || "";
 
+  const [email, setEmail] = useState(emailFromQuery);
+  const [otp, setOtp] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -33,18 +35,16 @@ function ResetPasswordForm() {
       return;
     }
 
-    if (!token) {
-      setError("Invalid or missing reset token");
-      setLoading(false);
-      return;
-    }
-
     try {
-      await api.post("/auth/reset-password", { token, password });
+      await api.post("/auth/reset-password", {
+        email,
+        otp,
+        new_password: password,
+      });
       setSuccess(true);
     } catch (err: any) {
       console.error("Reset password error:", err);
-      setError(err.response?.data?.message || "Failed to reset password. The link may have expired.");
+      setError(err.response?.data?.message || "Failed to reset password. The code may have expired.");
     } finally {
       setLoading(false);
     }
@@ -78,11 +78,40 @@ function ResetPasswordForm() {
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl font-bold text-center">Set New Password</CardTitle>
         <CardDescription className="text-center">
-          Enter your new password below
+          Enter the verification code sent to your email and your new password
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {!emailFromQuery && (
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="admin@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+          )}
+          <div className="space-y-2">
+            <Label htmlFor="otp">Verification Code</Label>
+            <div className="relative">
+              <KeyRound className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="otp"
+                type="text"
+                placeholder="123456"
+                className="pl-10 text-center tracking-[0.5em] text-lg font-mono"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                required
+                maxLength={6}
+              />
+            </div>
+          </div>
           <div className="space-y-2">
             <Label htmlFor="password">New Password</Label>
             <div className="relative">

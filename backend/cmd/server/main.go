@@ -27,7 +27,8 @@ func main() {
 	userAddressRepo := repository.NewUserAddressRepository()
 
 	// Initialize services - UPDATED: ProductService now needs categoryRepo
-	authService := services.NewAuthService(userRepo)
+	emailService := services.NewEmailService()
+	authService := services.NewAuthService(userRepo, emailService)
 	productService := services.NewProductService(productRepo, categoryRepo) // ✅ CHANGED
 	categoryService := services.NewCategoryService(categoryRepo)
 	orderService := services.NewOrderService(orderRepo, productRepo)

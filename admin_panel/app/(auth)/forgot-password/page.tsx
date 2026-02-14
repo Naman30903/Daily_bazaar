@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,9 +11,9 @@ import { AtSign, Loader2, ArrowLeft, CheckCircle2 } from "lucide-react";
 import api from "@/lib/api";
 
 export default function ForgotPasswordPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -22,52 +23,22 @@ export default function ForgotPasswordPage() {
 
     try {
       await api.post("/auth/forgot-password", { email });
-      setSuccess(true);
+      // Redirect to reset password page with email pre-filled
+      router.push(`/reset-password?email=${encodeURIComponent(email)}`);
     } catch (err: any) {
       console.error("Forgot password error:", err);
-      // Even if email not found, usually good security practice to show success or generic message
-      // But for admin panel, explicit error might be okay. Let's show generic error if it fails completely.
-      setError(err.response?.data?.message || "Failed to send reset link. Please try again.");
+      setError(err.response?.data?.message || "Failed to send reset code. Please try again.");
     } finally {
       setLoading(false);
     }
   };
-
-  if (success) {
-    return (
-      <Card className="w-full">
-        <CardHeader>
-          <div className="flex justify-center mb-4">
-            <CheckCircle2 className="h-12 w-12 text-green-500" />
-          </div>
-          <CardTitle className="text-2xl font-bold text-center">Check your email</CardTitle>
-          <CardDescription className="text-center">
-            We have sent a password reset link to <span className="font-medium text-foreground">{email}</span>
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm text-center text-muted-foreground">
-            Click the link in the email to reset your password. If you don't see the email, check your spam folder.
-          </p>
-        </CardContent>
-        <CardFooter>
-          <Button asChild variant="outline" className="w-full">
-            <Link href="/login">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Login
-            </Link>
-          </Button>
-        </CardFooter>
-      </Card>
-    );
-  }
 
   return (
     <Card className="w-full">
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl font-bold text-center">Reset Password</CardTitle>
         <CardDescription className="text-center">
-          Enter your email address and we'll send you a link to reset your password
+          Enter your email address and we'll send you a verification code
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -96,10 +67,10 @@ export default function ForgotPasswordPage() {
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Sending Link...
+                Sending Code...
               </>
             ) : (
-              "Send Reset Link"
+              "Send Verification Code"
             )}
           </Button>
         </form>

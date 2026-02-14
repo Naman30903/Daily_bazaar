@@ -124,6 +124,36 @@ func (r *UserRepository) GetUserByID(id string) (*models.User, error) {
 	return &users[0], nil
 }
 
+func (r *UserRepository) UpdateUser(userID string, fields map[string]interface{}) error {
+	url := fmt.Sprintf("%s/rest/v1/users?id=eq.%s", r.baseURL, userID)
+
+	body, err := json.Marshal(fields)
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest(http.MethodPatch, url, bytes.NewBuffer(body))
+	if err != nil {
+		return err
+	}
+
+	r.setHeaders(req)
+	req.Header.Set("Prefer", "return=minimal")
+
+	resp, err := r.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
+		respBody, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("failed to update user: status %d, body: %s", resp.StatusCode, string(respBody))
+	}
+
+	return nil
+}
+
 func (r *UserRepository) setHeaders(req *http.Request) {
 	req.Header.Set("Authorization", "Bearer "+r.apiKey)
 	req.Header.Set("apikey", r.apiKey)

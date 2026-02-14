@@ -1,8 +1,3 @@
-import 'package:daily_bazaar_frontend/routes/route.dart';
-import 'package:daily_bazaar_frontend/screens/forgot_password_page.dart';
-import 'package:daily_bazaar_frontend/screens/register_page.dart';
-import 'package:daily_bazaar_frontend/shared_feature/config/hive.dart';
-import 'package:daily_bazaar_frontend/shared_feature/models/auth_model.dart';
 import 'package:daily_bazaar_frontend/shared_feature/provider/auth_provider.dart';
 import 'package:daily_bazaar_frontend/shared_feature/widgets/button.dart';
 import 'package:daily_bazaar_frontend/shared_feature/widgets/snackbar.dart';
@@ -10,33 +5,36 @@ import 'package:daily_bazaar_frontend/shared_feature/widgets/textfield.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class LoginPage extends ConsumerStatefulWidget {
-  const LoginPage({super.key});
+class ResetPasswordPage extends ConsumerStatefulWidget {
+  const ResetPasswordPage({super.key, required this.email});
+
+  final String email;
 
   @override
-  ConsumerState<LoginPage> createState() => _LoginPageState();
+  ConsumerState<ResetPasswordPage> createState() => _ResetPasswordPageState();
 }
 
-class _LoginPageState extends ConsumerState<LoginPage> {
+class _ResetPasswordPageState extends ConsumerState<ResetPasswordPage> {
   final _formKey = GlobalKey<FormState>();
-
-  final _email = TextEditingController();
+  final _otp = TextEditingController();
   final _password = TextEditingController();
-
+  final _confirmPassword = TextEditingController();
   bool _obscure = true;
+  bool _isLoading = false;
 
   @override
   void dispose() {
-    _email.dispose();
+    _otp.dispose();
     _password.dispose();
+    _confirmPassword.dispose();
     super.dispose();
   }
 
-  String? _validateEmail(String? v) {
+  String? _validateOTP(String? v) {
     final value = (v ?? '').trim();
-    if (value.isEmpty) return 'Email is required';
-    final ok = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value);
-    if (!ok) return 'Enter a valid email';
+    if (value.isEmpty) return 'Verification code is required';
+    if (value.length != 6) return 'Must be 6 digits';
+    if (!RegExp(r'^\d{6}$').hasMatch(value)) return 'Only digits allowed';
     return null;
   }
 
@@ -47,37 +45,50 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     return null;
   }
 
+  String? _validateConfirmPassword(String? v) {
+    final value = (v ?? '');
+    if (value.isEmpty) return 'Please confirm password';
+    if (value != _password.text) return 'Passwords do not match';
+    return null;
+  }
+
   Future<void> _submit() async {
     FocusScope.of(context).unfocus();
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
+    setState(() => _isLoading = true);
+
     try {
-      final req = LoginRequest(
-        email: _email.text.trim(),
-        password: _password.text,
+      final api = ref.read(authApiProvider);
+      await api.resetPassword(
+        email: widget.email,
+        otp: _otp.text.trim(),
+        newPassword: _password.text,
       );
 
-      final res = await ref.read(authControllerProvider.notifier).login(req);
-
-      final token = res.token;
-      if (token != null && token.isNotEmpty) {
-        await TokenStorage.saveToken(token);
-      }
-
       if (!mounted) return;
-      Navigator.of(context).pushReplacementNamed(Routes.home);
+
+      showAppSnackBar(context, 'Password reset successfully! Please login.');
+
+      // Pop back to login screen
+      Navigator.of(context).popUntil((route) => route.isFirst);
     } catch (e) {
-      showAppSnackBar(context, e.toString());
+      if (mounted) showAppSnackBar(context, e.toString());
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final authState = ref.watch(authControllerProvider);
-    final isLoading = authState.isLoading;
 
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Set New Password'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -110,37 +121,37 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Text(
-                            'Welcome back',
+                            'Set New Password',
                             style: Theme.of(context).textTheme.headlineMedium
                                 ?.copyWith(fontWeight: FontWeight.w800),
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            'Login to continue shopping fresh groceries.',
+                            'Enter the code sent to ${widget.email} and your new password.',
                             style: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(color: cs.onSurfaceVariant),
                           ),
                           const SizedBox(height: 24),
                           AppTextField(
-                            controller: _email,
-                            label: 'Email',
-                            hint: 'name@example.com',
-                            keyboardType: TextInputType.emailAddress,
+                            controller: _otp,
+                            label: 'Verification Code',
+                            hint: '123456',
+                            keyboardType: TextInputType.number,
                             textInputAction: TextInputAction.next,
-                            prefixIcon: Icons.email_outlined,
-                            validator: _validateEmail,
+                            prefixIcon: Icons.pin_outlined,
+                            validator: _validateOTP,
                           ),
                           const SizedBox(height: 14),
                           AppTextField(
                             controller: _password,
-                            label: 'Password',
+                            label: 'New Password',
                             hint: '••••••••',
                             obscureText: _obscure,
                             prefixIcon: Icons.lock_outline,
-                            textInputAction: TextInputAction.done,
+                            textInputAction: TextInputAction.next,
                             validator: _validatePassword,
                             suffixIcon: IconButton(
-                              onPressed: isLoading
+                              onPressed: _isLoading
                                   ? null
                                   : () => setState(() => _obscure = !_obscure),
                               icon: Icon(
@@ -149,43 +160,23 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                     : Icons.visibility_off_outlined,
                               ),
                             ),
+                          ),
+                          const SizedBox(height: 14),
+                          AppTextField(
+                            controller: _confirmPassword,
+                            label: 'Confirm Password',
+                            hint: '••••••••',
+                            obscureText: true,
+                            prefixIcon: Icons.lock_outline,
+                            textInputAction: TextInputAction.done,
+                            validator: _validateConfirmPassword,
                             onFieldSubmitted: (_) => _submit(),
                           ),
                           const SizedBox(height: 18),
                           CustomButton(
-                            label: 'Login',
-                            isLoading: isLoading,
-                            onPressed: isLoading ? null : _submit,
-                          ),
-                          const SizedBox(height: 6),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton(
-                              onPressed: isLoading
-                                  ? null
-                                  : () {
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute<void>(
-                                          builder: (_) =>
-                                              const ForgotPasswordPage(),
-                                        ),
-                                      );
-                                    },
-                              child: const Text('Forgot password?'),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          TextButton(
-                            onPressed: isLoading
-                                ? null
-                                : () {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute<void>(
-                                        builder: (_) => const RegisterPage(),
-                                      ),
-                                    );
-                                  },
-                            child: const Text('New here? Create an account'),
+                            label: 'Update Password',
+                            isLoading: _isLoading,
+                            onPressed: _isLoading ? null : _submit,
                           ),
                         ],
                       ),

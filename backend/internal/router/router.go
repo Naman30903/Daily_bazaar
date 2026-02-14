@@ -23,6 +23,8 @@ func SetupRoutes(
 	// Auth routes (public)
 	mux.HandleFunc("POST /api/auth/register", authHandler.Register)
 	mux.HandleFunc("POST /api/auth/login", authHandler.Login)
+	mux.HandleFunc("POST /api/auth/forgot-password", authHandler.ForgotPassword)
+	mux.HandleFunc("POST /api/auth/reset-password", authHandler.ResetPassword)
 
 	// User routes (authenticated)
 	mux.Handle("GET /api/user/me", authMiddleware.Authenticate(http.HandlerFunc(userHandler.GetMe)))
