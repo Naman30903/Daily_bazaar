@@ -36,8 +36,8 @@ func (h *PaymentHandler) InitiatePayment(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if req.OrderID == "" || req.CustomerName == "" || req.CustomerEmail == "" {
-		http.Error(w, "order_id, customer_name, and customer_email are required", http.StatusBadRequest)
+	if req.OrderID == "" || req.CustomerName == "" {
+		http.Error(w, "order_id and customer_name are required", http.StatusBadRequest)
 		return
 	}
 
