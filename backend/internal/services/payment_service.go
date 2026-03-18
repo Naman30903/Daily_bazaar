@@ -42,7 +42,7 @@ func NewPaymentService(cfg *config.Config, orderRepo *repository.OrderRepository
 }
 
 // InitiatePayment creates a UroPay order for an existing Daily Bazaar order.
-func (s *PaymentService) InitiatePayment(orderID, customerName, customerEmail string, userID string) (*models.InitiatePaymentResponse, error) {
+func (s *PaymentService) InitiatePayment(orderID, customerName, customerEmail string, userID string, amountFromFrontend float64) (*models.InitiatePaymentResponse, error) {
 	order, err := s.orderRepo.GetOrderByID(orderID)
 	if err != nil {
 		return nil, errors.New("order not found")
@@ -68,8 +68,12 @@ func (s *PaymentService) InitiatePayment(orderID, customerName, customerEmail st
 		}
 	}
 
-	// UroPay expects amount in rupees (our TotalCents is in paise/cents where 1 rupee = 100)
-	amountRupees := float64(order.TotalCents) / 100.0
+	// Use the amount from frontend (in rupees) since DB price units may differ
+	amountRupees := amountFromFrontend
+	if amountRupees <= 0 {
+		// Fallback to order total
+		amountRupees = float64(order.TotalCents) / 100.0
+	}
 
 	// UroPay requires a non-empty customerEmail
 	if customerEmail == "" {

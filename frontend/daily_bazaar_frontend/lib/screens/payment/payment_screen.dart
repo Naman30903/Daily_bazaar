@@ -20,6 +20,7 @@ class PaymentScreen extends ConsumerStatefulWidget {
     required this.customerEmail,
     required this.authToken,
     required this.amountDisplay,
+    required this.amountInRupees,
   });
 
   final String orderId;
@@ -27,6 +28,7 @@ class PaymentScreen extends ConsumerStatefulWidget {
   final String customerEmail;
   final String authToken;
   final String amountDisplay;
+  final double amountInRupees;
 
   @override
   ConsumerState<PaymentScreen> createState() => _PaymentScreenState();
@@ -69,6 +71,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
         customerName: widget.customerName,
         customerEmail: widget.customerEmail,
         authToken: widget.authToken,
+        amount: widget.amountInRupees,
       );
       setState(() {
         _initResponse = resp;

@@ -121,9 +121,10 @@ type UroPayWebhookPayload struct {
 
 // API request/response for initiating payment from frontend
 type InitiatePaymentRequest struct {
-	OrderID       string `json:"order_id"`
-	CustomerName  string `json:"customer_name"`
-	CustomerEmail string `json:"customer_email"`
+	OrderID       string  `json:"order_id"`
+	CustomerName  string  `json:"customer_name"`
+	CustomerEmail string  `json:"customer_email"`
+	Amount        float64 `json:"amount"` // amount in rupees from frontend
 }
 
 type InitiatePaymentResponse struct {

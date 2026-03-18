@@ -196,9 +196,10 @@ class CheckoutScreen extends ConsumerWidget {
           builder: (_) => PaymentScreen(
             orderId: orderId,
             customerName: addr.fullName,
-            customerEmail: '', // email not stored in Hive currently
+            customerEmail: '',
             authToken: token,
             amountDisplay: checkoutState.formattedGrandTotalWithDonation,
+            amountInRupees: checkoutState.grandTotalWithDonationInRupees,
           ),
         ),
       );

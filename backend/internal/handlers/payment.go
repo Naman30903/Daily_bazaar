@@ -41,7 +41,7 @@ func (h *PaymentHandler) InitiatePayment(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	resp, err := h.paymentService.InitiatePayment(req.OrderID, req.CustomerName, req.CustomerEmail, claims.UserID)
+	resp, err := h.paymentService.InitiatePayment(req.OrderID, req.CustomerName, req.CustomerEmail, claims.UserID, req.Amount)
 	if err != nil {
 		if err.Error() == "access denied" {
 			http.Error(w, err.Error(), http.StatusForbidden)

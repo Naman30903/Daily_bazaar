@@ -12,6 +12,7 @@ class PaymentApi {
     required String customerName,
     required String customerEmail,
     required String authToken,
+    required double amount,
   }) async {
     final json = await _client.postJson(
       '/api/payments/initiate',
@@ -19,6 +20,7 @@ class PaymentApi {
         'order_id': orderId,
         'customer_name': customerName,
         'customer_email': customerEmail,
+        'amount': amount,
       },
       headers: {'Authorization': 'Bearer $authToken'},
     );
