@@ -102,10 +102,15 @@ func (s *PaymentService) InitiatePayment(orderID, customerName, customerEmail st
 	defer resp.Body.Close()
 
 	respBody, _ := io.ReadAll(resp.Body)
+	log.Printf("UroPay /order/generate response [%d]: %s", resp.StatusCode, string(respBody))
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("UroPay API returned %d: %s", resp.StatusCode, string(respBody))
+	}
 
 	var uroResp models.UroPayGenerateResponse
 	if err := json.Unmarshal(respBody, &uroResp); err != nil {
-		return nil, fmt.Errorf("failed to parse UroPay response: %w", err)
+		return nil, fmt.Errorf("failed to parse UroPay response: %s", string(respBody))
 	}
 
 	if uroResp.Code != 200 {
