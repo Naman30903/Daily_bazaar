@@ -71,6 +71,11 @@ func (s *PaymentService) InitiatePayment(orderID, customerName, customerEmail st
 	// UroPay expects amount in rupees (our TotalCents is in paise/cents where 1 rupee = 100)
 	amountRupees := float64(order.TotalCents) / 100.0
 
+	// UroPay requires a non-empty customerEmail
+	if customerEmail == "" {
+		customerEmail = "customer@dailybazaar.com"
+	}
+
 	reqBody := models.UroPayGenerateRequest{
 		VPA:             s.cfg.UroPayVPA,
 		VPAName:         s.cfg.UroPayVPAName,

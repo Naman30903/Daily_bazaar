@@ -66,7 +66,7 @@ type UroPayGenerateRequest struct {
 	Amount          float64           `json:"amount"` // in rupees (e.g. 499.00)
 	MerchantOrderId string            `json:"merchantOrderId"`
 	CustomerName    string            `json:"customerName"`
-	CustomerEmail   string            `json:"customerEmail,omitempty"`
+	CustomerEmail   string            `json:"customerEmail"`
 	TransactionNote string            `json:"transactionNote,omitempty"`
 	Notes           map[string]string `json:"notes,omitempty"`
 }
