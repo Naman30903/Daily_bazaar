@@ -1,6 +1,9 @@
 package models
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 type Order struct {
 	ID              string                 `json:"id"`
@@ -72,15 +75,15 @@ type UroPayGenerateRequest struct {
 }
 
 type UroPayGenerateResponse struct {
-	Code    int    `json:"code"`
-	Status  string `json:"status"`
-	Message string `json:"message"`
+	Code    int             `json:"code"`
+	Status  string          `json:"status"`
+	Message json.RawMessage `json:"message"`
 	Data    struct {
-		UroPayOrderId  string `json:"uroPayOrderId"`
-		OrderStatus    string `json:"orderStatus"`
-		UPIString      string `json:"upiString"`
-		QRCode         string `json:"qrCode"`
-		AmountInRupees string `json:"amountInRupees"`
+		UroPayOrderId  string      `json:"uroPayOrderId"`
+		OrderStatus    string      `json:"orderStatus"`
+		UPIString      string      `json:"upiString"`
+		QRCode         string      `json:"qrCode"`
+		AmountInRupees json.Number `json:"amountInRupees"`
 	} `json:"data"`
 }
 

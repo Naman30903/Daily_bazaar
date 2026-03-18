@@ -115,7 +115,7 @@ func (s *PaymentService) InitiatePayment(orderID, customerName, customerEmail st
 	}
 
 	if uroResp.Code != 200 {
-		return nil, fmt.Errorf("UroPay error (%d): %s", uroResp.Code, uroResp.Message)
+		return nil, fmt.Errorf("UroPay error (%d): %s", uroResp.Code, string(uroResp.Message))
 	}
 
 	// Store payment metadata in order
@@ -124,7 +124,7 @@ func (s *PaymentService) InitiatePayment(orderID, customerName, customerEmail st
 		"uropay_order_id":  uroResp.Data.UroPayOrderId,
 		"upi_string":       uroResp.Data.UPIString,
 		"qr_code":          uroResp.Data.QRCode,
-		"amount_in_rupees": uroResp.Data.AmountInRupees,
+		"amount_in_rupees": uroResp.Data.AmountInRupees.String(),
 		"payment_status":   models.PaymentStatusCreated,
 	}
 
@@ -136,7 +136,7 @@ func (s *PaymentService) InitiatePayment(orderID, customerName, customerEmail st
 		UroPayOrderId:  uroResp.Data.UroPayOrderId,
 		UPIString:      uroResp.Data.UPIString,
 		QRCode:         uroResp.Data.QRCode,
-		AmountInRupees: uroResp.Data.AmountInRupees,
+		AmountInRupees: uroResp.Data.AmountInRupees.String(),
 		PaymentStatus:  models.PaymentStatusCreated,
 	}, nil
 }
