@@ -68,11 +68,11 @@ func (s *PaymentService) InitiatePayment(orderID, customerName, customerEmail st
 		}
 	}
 
-	// Use the amount from frontend (in rupees) since DB price units may differ
-	amountRupees := amountFromFrontend
-	if amountRupees <= 0 {
-		// Fallback to order total
-		amountRupees = float64(order.TotalCents) / 100.0
+	// UroPay expects amount in paise (e.g. 15300 for ₹153)
+	// Frontend sends amount in rupees, convert to paise
+	amountPaise := amountFromFrontend * 100
+	if amountPaise <= 0 {
+		amountPaise = float64(order.TotalCents)
 	}
 
 	// UroPay requires a non-empty customerEmail
@@ -83,7 +83,7 @@ func (s *PaymentService) InitiatePayment(orderID, customerName, customerEmail st
 	reqBody := models.UroPayGenerateRequest{
 		VPA:             s.cfg.UroPayVPA,
 		VPAName:         s.cfg.UroPayVPAName,
-		Amount:          amountRupees,
+		Amount:          amountPaise,
 		MerchantOrderId: orderID,
 		CustomerName:    customerName,
 		CustomerEmail:   customerEmail,
