@@ -23,6 +23,8 @@ type OrderItem struct {
 	ID             string `json:"id"`
 	OrderID        string `json:"order_id"`
 	ProductID      string `json:"product_id"`
+	ProductName    string `json:"product_name"`
+	ProductImage   string `json:"product_image,omitempty"`
 	Quantity       int    `json:"quantity"`
 	UnitPriceCents int64  `json:"unit_price_cents"`
 }

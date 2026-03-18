@@ -56,9 +56,17 @@ func (s *OrderService) CreateOrder(userID string, req *models.CreateOrderRequest
 		itemTotal := product.PriceCents * int64(item.Quantity)
 		subtotalCents += itemTotal
 
+		// Get primary image URL if available
+		var imageURL string
+		if len(product.Images) > 0 {
+			imageURL = product.Images[0].URL
+		}
+
 		orderItems = append(orderItems, models.OrderItem{
 			ID:             uuid.New().String(),
 			ProductID:      item.ProductID,
+			ProductName:    product.Name,
+			ProductImage:   imageURL,
 			Quantity:       item.Quantity,
 			UnitPriceCents: product.PriceCents,
 		})

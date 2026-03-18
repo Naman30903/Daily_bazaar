@@ -145,24 +145,13 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
   }
 
   void _showPaymentSuccess() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        icon: const Icon(Icons.check_circle, color: Colors.green, size: 48),
-        title: const Text('Payment Successful'),
-        content: const Text('Your payment has been confirmed. Your order is being processed.'),
-        actions: [
-          FilledButton(
-            onPressed: () {
-              Navigator.of(ctx).pop();
-              // Pop back to home or orders screen
-              Navigator.of(context).popUntil((route) => route.isFirst);
-            },
-            child: const Text('Continue Shopping'),
-          ),
-        ],
-      ),
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      '/order-success',
+      (_) => false,
+      arguments: {
+        'orderId': widget.orderId,
+        'amountDisplay': widget.amountDisplay,
+      },
     );
   }
 

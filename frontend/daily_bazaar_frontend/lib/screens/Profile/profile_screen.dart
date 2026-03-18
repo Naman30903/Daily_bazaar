@@ -80,7 +80,7 @@ class ProfilePage extends ConsumerWidget {
                         child: _QuickActionCard(
                           icon: Icons.shopping_bag_outlined,
                           label: 'Your orders',
-                          onTap: () {},
+                          onTap: () => Navigator.of(context).pushNamed(Routes.orderHistory),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -133,14 +133,16 @@ class ProfilePage extends ConsumerWidget {
                         title: 'Share the app',
                       ),
                       const _Divider(),
-                      const _SettingsTile(
+                      _SettingsTile(
                         icon: Icons.info_outline,
                         title: 'About us',
+                        onTap: () => Navigator.of(context).pushNamed(Routes.aboutUs),
                       ),
                       const _Divider(),
-                      const _SettingsTile(
+                      _SettingsTile(
                         icon: Icons.lock_outline,
                         title: 'Account privacy',
+                        onTap: () => Navigator.of(context).pushNamed(Routes.accountPrivacy),
                       ),
                       const _Divider(),
                       const _SettingsTile(

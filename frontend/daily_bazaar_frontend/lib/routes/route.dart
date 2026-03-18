@@ -1,4 +1,9 @@
+import 'package:daily_bazaar_frontend/screens/Profile/about_us_screen.dart';
+import 'package:daily_bazaar_frontend/screens/Profile/account_privacy_screen.dart';
 import 'package:daily_bazaar_frontend/screens/Profile/address_screen.dart';
+import 'package:daily_bazaar_frontend/screens/order/order_detail_screen.dart';
+import 'package:daily_bazaar_frontend/screens/order/order_history_screen.dart';
+import 'package:daily_bazaar_frontend/screens/order/order_success_screen.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:daily_bazaar_frontend/screens/category_browse.dart';
 import 'package:daily_bazaar_frontend/screens/checkout/checkout_screen.dart';
@@ -25,6 +30,11 @@ abstract final class Routes {
   static const productDetail = '/product-detail';
   static const checkout = '/checkout';
   static const search = '/search';
+  static const orderHistory = '/order-history';
+  static const orderDetail = '/order-detail';
+  static const orderSuccess = '/order-success';
+  static const aboutUs = '/about-us';
+  static const accountPrivacy = '/account-privacy';
 }
 
 /// Centralized router (single place for navigation evolution).
@@ -88,6 +98,36 @@ abstract final class AppRouter {
         return MaterialPageRoute<void>(
           settings: settings,
           builder: (_) => SearchPage(initialQuery: initialQuery),
+        );
+      case Routes.orderHistory:
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) => const OrderHistoryScreen(),
+        );
+      case Routes.orderDetail:
+        final orderData = settings.arguments as Map<String, dynamic>;
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) => OrderDetailScreen(order: orderData),
+        );
+      case Routes.orderSuccess:
+        final args = settings.arguments as Map<String, dynamic>;
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) => OrderSuccessScreen(
+            orderId: args['orderId'] as String,
+            amountDisplay: args['amountDisplay'] as String,
+          ),
+        );
+      case Routes.aboutUs:
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) => const AboutUsScreen(),
+        );
+      case Routes.accountPrivacy:
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) => const AccountPrivacyScreen(),
         );
       default:
         return MaterialPageRoute<void>(
