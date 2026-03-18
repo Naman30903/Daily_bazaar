@@ -95,7 +95,7 @@ class AboutUsScreen extends StatelessWidget {
                     children: [
                       _SectionHeader(
                         icon: Icons.favorite_rounded,
-                        iconColor: const Color(0xFFFF6B6B),
+                        iconColor: const Color(0xFFFB7185),
                         title: 'Our Mission',
                       ),
                       const SizedBox(height: 12),
@@ -119,7 +119,7 @@ class AboutUsScreen extends StatelessWidget {
                     children: [
                       _SectionHeader(
                         icon: Icons.auto_awesome,
-                        iconColor: const Color(0xFFFFD700),
+                        iconColor: const Color(0xFFFBBF24),
                         title: 'What We Stand For',
                       ),
                       const SizedBox(height: 16),
@@ -163,7 +163,7 @@ class AboutUsScreen extends StatelessWidget {
                     children: [
                       _SectionHeader(
                         icon: Icons.menu_book_rounded,
-                        iconColor: const Color(0xFF48DBFB),
+                        iconColor: const Color(0xFF38BDF8),
                         title: 'Our Story',
                       ),
                       const SizedBox(height: 12),

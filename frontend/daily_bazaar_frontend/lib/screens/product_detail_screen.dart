@@ -8,6 +8,7 @@ import '../shared_feature/widgets/product_detail/price_section.dart';
 import '../shared_feature/widgets/product_detail/product_actions.dart';
 import '../shared_feature/widgets/product_detail/similar_products_carousel.dart';
 import '../shared_feature/widgets/product_detail/sticky_add_to_cart_bar.dart';
+import '../shared_feature/widgets/product_detail/frequently_bought_together.dart';
 
 /// Product detail screen matching the grocery app UI design.
 /// Displays product images, info, pricing, actions, similar products,
@@ -205,6 +206,18 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 onExploreBrandTap: _handleExploreBrandTap,
               ),
             ),
+
+            // Frequently Bought Together
+            if (widget.similarProducts.length >= 2)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: ProductDetailTheme.space16),
+                  child: FrequentlyBoughtTogether(
+                    mainProduct: product,
+                    bundleProducts: widget.similarProducts.take(2).toList(),
+                  ),
+                ),
+              ),
 
             // Spacer
             const SliverToBoxAdapter(

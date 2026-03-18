@@ -312,11 +312,11 @@ class _OrderCard extends StatelessWidget {
   _StatusInfo _getStatusInfo(String status, ColorScheme cs) {
     switch (status) {
       case 'pending':
-        return _StatusInfo(icon: Icons.schedule, label: 'Order Placed', color: const Color(0xFFFFB020));
+        return _StatusInfo(icon: Icons.schedule, label: 'Order Placed', color: const Color(0xFFF59E0B));
       case 'confirmed':
         return _StatusInfo(icon: Icons.thumb_up_outlined, label: 'Confirmed', color: cs.primary);
       case 'shipped':
-        return _StatusInfo(icon: Icons.local_shipping_outlined, label: 'On the Way', color: const Color(0xFF48DBFB));
+        return _StatusInfo(icon: Icons.local_shipping_outlined, label: 'On the Way', color: const Color(0xFF38BDF8));
       case 'delivered':
         return _StatusInfo(icon: Icons.check_circle_outline, label: 'Delivered', color: cs.primary);
       case 'cancelled':

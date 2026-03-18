@@ -4,68 +4,68 @@ import 'package:flutter/material.dart';
 /// Centralizes colors, spacing, typography, and border radius for consistency.
 abstract final class ProductDetailTheme {
   // ─────────────────────────────────────────────────────────────────────────
-  // COLORS
+  // COLORS — Premium dark blue-gray palette
   // ─────────────────────────────────────────────────────────────────────────
 
-  /// Main screen background (very dark)
-  static const Color backgroundDark = Color(0xFF0D0D0D);
+  /// Main screen background (dark navy)
+  static const Color backgroundDark = Color(0xFF0F1117);
 
   /// Card/section background
-  static const Color cardBackground = Color(0xFF1A1A1A);
+  static const Color cardBackground = Color(0xFF181B23);
 
   /// Slightly elevated surface (e.g., product image area)
-  static const Color surfaceElevated = Color(0xFF1E1E1E);
+  static const Color surfaceElevated = Color(0xFF1E2230);
 
-  /// Primary green accent (buttons, badges)
-  static const Color primaryGreen = Color(0xFF2ECC71);
+  /// Primary emerald accent (buttons, badges)
+  static const Color primaryGreen = Color(0xFF34D399);
 
-  /// Darker green for hover/pressed states
-  static const Color primaryGreenDark = Color(0xFF27AE60);
+  /// Darker emerald for hover/pressed states
+  static const Color primaryGreenDark = Color(0xFF10B981);
 
   /// Delivery time badge background
-  static const Color deliveryBadgeBg = Color(0xFF1B3A2F);
+  static const Color deliveryBadgeBg = Color(0xFF132E25);
 
   /// Delivery time badge text
-  static const Color deliveryBadgeText = Color(0xFF2ECC71);
+  static const Color deliveryBadgeText = Color(0xFF34D399);
 
-  /// Discount badge background (orange-red)
-  static const Color discountBadgeBg = Color(0xFF3D2A1A);
+  /// Discount badge background (warm amber tint)
+  static const Color discountBadgeBg = Color(0xFF2D2417);
 
   /// Discount badge text
-  static const Color discountBadgeText = Color(0xFFFF9500);
+  static const Color discountBadgeText = Color(0xFFF59E0B);
 
   /// Veg indicator green
-  static const Color vegIndicator = Color(0xFF2ECC71);
+  static const Color vegIndicator = Color(0xFF34D399);
 
-  /// Star rating color
-  static const Color starRating = Color(0xFFFFC107);
+  /// Star rating color (warm amber)
+  static const Color starRating = Color(0xFFFBBF24);
 
-  /// Primary text (white)
-  static const Color textPrimary = Color(0xFFFFFFFF);
+  /// Primary text (warm white)
+  static const Color textPrimary = Color(0xFFF1F5F9);
 
-  /// Secondary text (gray)
-  static const Color textSecondary = Color(0xFF9E9E9E);
+  /// Secondary text (slate)
+  static const Color textSecondary = Color(0xFF94A3B8);
 
-  /// Muted text (darker gray)
-  static const Color textMuted = Color(0xFF6B6B6B);
+  /// Muted text (dark slate)
+  static const Color textMuted = Color(0xFF64748B);
 
   /// MRP strikethrough text
-  static const Color textStrikethrough = Color(0xFF757575);
+  static const Color textStrikethrough = Color(0xFF64748B);
 
   /// Divider color
-  static const Color divider = Color(0xFF2A2A2A);
+  static const Color divider = Color(0xFF2A3040);
 
   /// Icon default color
-  static const Color iconDefault = Color(0xFFE0E0E0);
+  static const Color iconDefault = Color(0xFFCBD5E1);
 
   /// Icon muted color
-  static const Color iconMuted = Color(0xFF757575);
+  static const Color iconMuted = Color(0xFF64748B);
 
   /// Wishlist heart (unfilled)
-  static const Color wishlistInactive = Color(0xFF9E9E9E);
+  static const Color wishlistInactive = Color(0xFF94A3B8);
 
-  /// Wishlist heart (filled - red)
-  static const Color wishlistActive = Color(0xFFE53935);
+  /// Wishlist heart (filled - soft rose)
+  static const Color wishlistActive = Color(0xFFF43F5E);
 
   // ─────────────────────────────────────────────────────────────────────────
   // SPACING SCALE

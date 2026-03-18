@@ -2,12 +2,18 @@ import 'package:daily_bazaar_frontend/routes/route.dart';
 import '../core/utils/responsive.dart';
 import 'package:daily_bazaar_frontend/shared_feature/models/category_model.dart';
 import 'package:daily_bazaar_frontend/shared_feature/models/home_models.dart';
+import 'package:daily_bazaar_frontend/shared_feature/models/product_model.dart';
 import 'package:daily_bazaar_frontend/shared_feature/provider/category_provider.dart';
 import 'package:daily_bazaar_frontend/shared_feature/widgets/category_grid_section.dart';
+import 'package:daily_bazaar_frontend/shared_feature/widgets/flash_deals_section.dart';
+import 'package:daily_bazaar_frontend/shared_feature/widgets/free_shipping_bar.dart';
 import 'package:daily_bazaar_frontend/shared_feature/widgets/home_app_bar.dart';
 import 'package:daily_bazaar_frontend/shared_feature/widgets/offers_carousel.dart';
 import 'package:daily_bazaar_frontend/shared_feature/widgets/search_bar_widget.dart';
+import 'package:daily_bazaar_frontend/shared_feature/widgets/staggered_fade_slide.dart';
 import 'package:daily_bazaar_frontend/shared_feature/widgets/suggested_items_section.dart';
+import 'package:daily_bazaar_frontend/shared_feature/config/config.dart';
+import 'package:daily_bazaar_frontend/shared_feature/helper/api_exception.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:daily_bazaar_frontend/shared_feature/provider/cart_provider.dart';
@@ -23,6 +29,28 @@ class HomePage extends ConsumerStatefulWidget {
 
 class _HomePageState extends ConsumerState<HomePage> {
   int _currentNavIndex = 0;
+  List<Product> _flashDealProducts = [];
+  bool _flashDealsLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFlashDeals();
+  }
+
+  Future<void> _loadFlashDeals() async {
+    try {
+      final client = ApiClient(baseUrl: AppEnvironment.apiBaseUrl);
+      final resp = await client.getJsonList('/api/products?limit=10');
+      if (!mounted) return;
+      setState(() {
+        _flashDealProducts = resp.map((e) => Product.fromJson(e)).toList();
+        _flashDealsLoading = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _flashDealsLoading = false);
+    }
+  }
 
   // Mock data - replace with actual API calls
   final List<OfferBanner> _offers = const [
@@ -36,13 +64,19 @@ class _HomePageState extends ConsumerState<HomePage> {
       id: '2',
       imageUrl: '',
       title: 'Free Delivery',
-      subtitle: 'Above ₹299',
+      subtitle: 'Orders above ₹500',
     ),
     OfferBanner(
       id: '3',
       imageUrl: '',
       title: 'Festive Sale',
-      subtitle: 'Up to 70% off',
+      subtitle: 'Up to 70% off on all items',
+    ),
+    OfferBanner(
+      id: '4',
+      imageUrl: '',
+      title: 'New Arrivals',
+      subtitle: 'Fresh stock every day',
     ),
   ];
 
@@ -133,7 +167,7 @@ class _HomePageState extends ConsumerState<HomePage> {
         }
       },
       loading: () => deliveryAddressText = 'Loading address...',
-      error: (_, __) => deliveryAddressText = 'Set delivery address',
+      error: (_, _) => deliveryAddressText = 'Set delivery address',
     );
 
     return Scaffold(
@@ -152,58 +186,88 @@ class _HomePageState extends ConsumerState<HomePage> {
           child: SingleChildScrollView(
             child: Column(
               children: [
-                SearchBarWidget(
-                  onTap: () {
-                    Navigator.of(context).pushNamed(Routes.search);
-                  },
+                StaggeredFadeSlide(
+                  index: 0,
+                  child: SearchBarWidget(
+                    onTap: () {
+                      Navigator.of(context).pushNamed(Routes.search);
+                    },
+                  ),
                 ),
                 const SizedBox(height: 8),
-                OffersCarousel(
-                  offers: _offers,
-                  onOfferTap: (offer) {
-                    // TODO: handle offer tap
-                  },
+                StaggeredFadeSlide(
+                  index: 1,
+                  child: OffersCarousel(
+                    offers: _offers,
+                    onOfferTap: (offer) {},
+                  ),
                 ),
-                const SizedBox(height: 16),
-                SuggestedItemsSection(
-                  products: _suggestedProducts,
-                  onProductTap: (product) {
-                    // TODO: navigate to product detail
-                  },
-                  onAddToCart: (product) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('${product.name} added to cart'),
-                        duration: const Duration(seconds: 2),
+                const SizedBox(height: 12),
+
+                // Free shipping progress bar (only when cart has items)
+                if (!cartState.isEmpty)
+                  StaggeredFadeSlide(
+                    index: 0,
+                    child: FreeShippingBar(
+                      currentAmountCents: cartState.items.fold(
+                        0,
+                        (sum, item) => sum + item.totalPriceCents,
                       ),
-                    );
-                  },
+                    ),
+                  ),
+
+                const SizedBox(height: 8),
+
+                // Flash Deals
+                if (!_flashDealsLoading && _flashDealProducts.isNotEmpty)
+                  StaggeredFadeSlide(
+                    index: 2,
+                    child: FlashDealsSection(products: _flashDealProducts),
+                  ),
+
+                const SizedBox(height: 16),
+                StaggeredFadeSlide(
+                  index: 3,
+                  child: SuggestedItemsSection(
+                    products: _suggestedProducts,
+                    onProductTap: (product) {},
+                    onAddToCart: (product) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('${product.name} added to cart'),
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    },
+                  ),
                 ),
                 const SizedBox(height: 16),
 
                 // Grocery & Kitchen (positions 1..8)
-                groceryAsync.when(
-                  data: (cats) => CategoryGridSection(
-                    title: 'Grocery & Kitchen',
-                    categories: _mapToItems(cats, fallbackColor: 0xFFE3F2FD),
-                    onCategoryTap: (categoryItem) {
-                      // Find the original Category from the list
-                      final category = cats.firstWhere(
-                        (c) => c.id == categoryItem.id,
-                      );
-                      Navigator.of(
-                        context,
-                      ).pushNamed(Routes.categoryBrowse, arguments: category);
-                    },
-                  ),
-                  loading: () => const _CategorySectionSkeleton(
-                    title: 'Grocery & Kitchen',
-                  ),
-                  error: (e, _) => _CategorySectionError(
-                    title: 'Grocery & Kitchen',
-                    message: e.toString(),
-                    onRetry: () => ref.invalidate(
-                      filteredRootCategoriesProvider(_groceryRange),
+                StaggeredFadeSlide(
+                  index: 4,
+                  child: groceryAsync.when(
+                    data: (cats) => CategoryGridSection(
+                      title: 'Grocery & Kitchen',
+                      categories: _mapToItems(cats, fallbackColor: 0xFFE3F2FD),
+                      onCategoryTap: (categoryItem) {
+                        final category = cats.firstWhere(
+                          (c) => c.id == categoryItem.id,
+                        );
+                        Navigator.of(
+                          context,
+                        ).pushNamed(Routes.categoryBrowse, arguments: category);
+                      },
+                    ),
+                    loading: () => const _CategorySectionSkeleton(
+                      title: 'Grocery & Kitchen',
+                    ),
+                    error: (e, _) => _CategorySectionError(
+                      title: 'Grocery & Kitchen',
+                      message: e.toString(),
+                      onRetry: () => ref.invalidate(
+                        filteredRootCategoriesProvider(_groceryRange),
+                      ),
                     ),
                   ),
                 ),
@@ -211,26 +275,29 @@ class _HomePageState extends ConsumerState<HomePage> {
                 const SizedBox(height: 16),
 
                 // Snacks & Drinks (positions 9..16)
-                snacksAsync.when(
-                  data: (cats) => CategoryGridSection(
-                    title: 'Snacks & Drinks',
-                    categories: _mapToItems(cats, fallbackColor: 0xFFFFE0B2),
-                    onCategoryTap: (categoryItem) {
-                      final category = cats.firstWhere(
-                        (c) => c.id == categoryItem.id,
-                      );
-                      Navigator.of(
-                        context,
-                      ).pushNamed(Routes.categoryBrowse, arguments: category);
-                    },
-                  ),
-                  loading: () =>
-                      const _CategorySectionSkeleton(title: 'Snacks & Drinks'),
-                  error: (e, _) => _CategorySectionError(
-                    title: 'Snacks & Drinks',
-                    message: e.toString(),
-                    onRetry: () => ref.invalidate(
-                      filteredRootCategoriesProvider(_snacksRange),
+                StaggeredFadeSlide(
+                  index: 5,
+                  child: snacksAsync.when(
+                    data: (cats) => CategoryGridSection(
+                      title: 'Snacks & Drinks',
+                      categories: _mapToItems(cats, fallbackColor: 0xFFFFE0B2),
+                      onCategoryTap: (categoryItem) {
+                        final category = cats.firstWhere(
+                          (c) => c.id == categoryItem.id,
+                        );
+                        Navigator.of(
+                          context,
+                        ).pushNamed(Routes.categoryBrowse, arguments: category);
+                      },
+                    ),
+                    loading: () =>
+                        const _CategorySectionSkeleton(title: 'Snacks & Drinks'),
+                    error: (e, _) => _CategorySectionError(
+                      title: 'Snacks & Drinks',
+                      message: e.toString(),
+                      onRetry: () => ref.invalidate(
+                        filteredRootCategoriesProvider(_snacksRange),
+                      ),
                     ),
                   ),
                 ),
@@ -238,26 +305,29 @@ class _HomePageState extends ConsumerState<HomePage> {
                 const SizedBox(height: 16),
 
                 // Personal Care (positions 17..24)
-                personalAsync.when(
-                  data: (cats) => CategoryGridSection(
-                    title: 'Personal Care',
-                    categories: _mapToItems(cats, fallbackColor: 0xFFE1F5FE),
-                    onCategoryTap: (categoryItem) {
-                      final category = cats.firstWhere(
-                        (c) => c.id == categoryItem.id,
-                      );
-                      Navigator.of(
-                        context,
-                      ).pushNamed(Routes.categoryBrowse, arguments: category);
-                    },
-                  ),
-                  loading: () =>
-                      const _CategorySectionSkeleton(title: 'Personal Care'),
-                  error: (e, _) => _CategorySectionError(
-                    title: 'Personal Care',
-                    message: e.toString(),
-                    onRetry: () => ref.invalidate(
-                      filteredRootCategoriesProvider(_personalCareRange),
+                StaggeredFadeSlide(
+                  index: 6,
+                  child: personalAsync.when(
+                    data: (cats) => CategoryGridSection(
+                      title: 'Personal Care',
+                      categories: _mapToItems(cats, fallbackColor: 0xFFE1F5FE),
+                      onCategoryTap: (categoryItem) {
+                        final category = cats.firstWhere(
+                          (c) => c.id == categoryItem.id,
+                        );
+                        Navigator.of(
+                          context,
+                        ).pushNamed(Routes.categoryBrowse, arguments: category);
+                      },
+                    ),
+                    loading: () =>
+                        const _CategorySectionSkeleton(title: 'Personal Care'),
+                    error: (e, _) => _CategorySectionError(
+                      title: 'Personal Care',
+                      message: e.toString(),
+                      onRetry: () => ref.invalidate(
+                        filteredRootCategoriesProvider(_personalCareRange),
+                      ),
                     ),
                   ),
                 ),
@@ -270,33 +340,12 @@ class _HomePageState extends ConsumerState<HomePage> {
       ),
       floatingActionButton: cartState.isEmpty
           ? null
-          : FloatingActionButton.extended(
-              onPressed: () => Navigator.of(context).pushNamed(Routes.checkout),
-              label: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'View Cart',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      height: 1.0,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${cartState.totalItems} ${cartState.totalItems == 1 ? 'item' : 'items'}',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      height: 1.0,
-                    ),
-                  ),
-                ],
-              ),
-              icon: const Icon(Icons.shopping_cart_outlined),
-              shape: const StadiumBorder(),
+          : _AnimatedCartFAB(
+              itemCount: cartState.totalItems,
+              totalRupees: cartState.items.fold<int>(
+                0, (sum, item) => sum + item.totalPriceCents,
+              ) / 100,
+              onTap: () => Navigator.of(context).pushNamed(Routes.checkout),
             ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       bottomNavigationBar: AppBottomNavBar(
@@ -427,6 +476,138 @@ class _CategorySectionError extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               TextButton(onPressed: onRetry, child: const Text('Retry')),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AnimatedCartFAB extends StatefulWidget {
+  const _AnimatedCartFAB({
+    required this.itemCount,
+    required this.totalRupees,
+    required this.onTap,
+  });
+
+  final int itemCount;
+  final double totalRupees;
+  final VoidCallback onTap;
+
+  @override
+  State<_AnimatedCartFAB> createState() => _AnimatedCartFABState();
+}
+
+class _AnimatedCartFABState extends State<_AnimatedCartFAB>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _scaleAnim;
+
+  int _prevCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _prevCount = widget.itemCount;
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    _scaleAnim = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.15), weight: 40),
+      TweenSequenceItem(tween: Tween(begin: 1.15, end: 0.95), weight: 30),
+      TweenSequenceItem(tween: Tween(begin: 0.95, end: 1.0), weight: 30),
+    ]).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+  }
+
+  @override
+  void didUpdateWidget(covariant _AnimatedCartFAB oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.itemCount != _prevCount) {
+      _prevCount = widget.itemCount;
+      _controller.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final totalFormatted = widget.totalRupees == widget.totalRupees.truncateToDouble()
+        ? '₹${widget.totalRupees.toStringAsFixed(0)}'
+        : '₹${widget.totalRupees.toStringAsFixed(2)}';
+
+    return ScaleTransition(
+      scale: _scaleAnim,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          decoration: BoxDecoration(
+            color: cs.primary,
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: [
+              BoxShadow(
+                color: cs.primary.withValues(alpha: 0.4),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Item count badge
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${widget.itemCount}',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: cs.onPrimary,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Icon(Icons.shopping_cart_rounded, size: 20, color: cs.onPrimary),
+              const SizedBox(width: 10),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'View Cart',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: cs.onPrimary,
+                      height: 1.1,
+                    ),
+                  ),
+                  Text(
+                    totalFormatted,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: cs.onPrimary.withValues(alpha: 0.85),
+                      height: 1.2,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 6),
+              Icon(Icons.arrow_forward_ios, size: 14, color: cs.onPrimary.withValues(alpha: 0.7)),
             ],
           ),
         ),

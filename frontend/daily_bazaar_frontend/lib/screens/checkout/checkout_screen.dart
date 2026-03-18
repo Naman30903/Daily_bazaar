@@ -10,6 +10,7 @@ import 'package:daily_bazaar_frontend/shared_feature/widgets/checkout/delivery_a
 import 'package:daily_bazaar_frontend/shared_feature/widgets/checkout/delivery_eta_section.dart';
 import 'package:daily_bazaar_frontend/shared_feature/widgets/checkout/delivery_instructions_section.dart';
 import 'package:daily_bazaar_frontend/shared_feature/widgets/checkout/donation_section.dart';
+import 'package:daily_bazaar_frontend/shared_feature/widgets/free_shipping_bar.dart';
 import 'package:daily_bazaar_frontend/screens/payment/payment_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -71,9 +72,15 @@ class CheckoutScreen extends ConsumerWidget {
                 onDecrementQuantity: controller.decrementQuantity,
               ),
 
+              const SizedBox(height: 4),
+
+              // Free shipping progress
+              FreeShippingBar(
+                currentAmountCents: checkoutState.billDetails.itemsTotalCents,
+              ),
+
               const SizedBox(height: 8),
 
-              // Bill Details Section
               // Bill Details Section
               BillDetailsSection(billDetails: checkoutState.billDetails),
 

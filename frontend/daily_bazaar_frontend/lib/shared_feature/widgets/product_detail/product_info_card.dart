@@ -184,7 +184,7 @@ class _VegIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = isVeg
         ? ProductDetailTheme.vegIndicator
-        : const Color(0xFFE53935); // Red for non-veg
+        : const Color(0xFFF43F5E); // Rose for non-veg
 
     return Container(
       width: 18,
