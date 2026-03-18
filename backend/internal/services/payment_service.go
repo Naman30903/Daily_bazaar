@@ -68,13 +68,13 @@ func (s *PaymentService) InitiatePayment(orderID, customerName, customerEmail st
 		}
 	}
 
-	// Amount in paise (totalCents is in cents, 1 cent = 1 paisa for INR)
-	amountPaise := order.TotalCents
+	// UroPay expects amount in rupees (our TotalCents is in paise/cents where 1 rupee = 100)
+	amountRupees := float64(order.TotalCents) / 100.0
 
 	reqBody := models.UroPayGenerateRequest{
 		VPA:             s.cfg.UroPayVPA,
 		VPAName:         s.cfg.UroPayVPAName,
-		Amount:          amountPaise,
+		Amount:          amountRupees,
 		MerchantOrderId: orderID,
 		CustomerName:    customerName,
 		CustomerEmail:   customerEmail,
@@ -104,17 +104,13 @@ func (s *PaymentService) InitiatePayment(orderID, customerName, customerEmail st
 	respBody, _ := io.ReadAll(resp.Body)
 	log.Printf("UroPay /order/generate response [%d]: %s", resp.StatusCode, string(respBody))
 
-	if resp.StatusCode != http.StatusOK {
+	var uroResp models.UroPayGenerateResponse
+	if err := json.Unmarshal(respBody, &uroResp); err != nil {
 		return nil, fmt.Errorf("UroPay API returned %d: %s", resp.StatusCode, string(respBody))
 	}
 
-	var uroResp models.UroPayGenerateResponse
-	if err := json.Unmarshal(respBody, &uroResp); err != nil {
-		return nil, fmt.Errorf("failed to parse UroPay response: %s", string(respBody))
-	}
-
 	if uroResp.Code != 200 {
-		return nil, fmt.Errorf("UroPay error: %s", uroResp.Message)
+		return nil, fmt.Errorf("UroPay error (%d): %s", uroResp.Code, uroResp.Message)
 	}
 
 	// Store payment metadata in order

@@ -63,10 +63,10 @@ const (
 type UroPayGenerateRequest struct {
 	VPA             string            `json:"vpa"`
 	VPAName         string            `json:"vpaName"`
-	Amount          int64             `json:"amount"` // in paise
+	Amount          float64           `json:"amount"` // in rupees (e.g. 499.00)
 	MerchantOrderId string            `json:"merchantOrderId"`
 	CustomerName    string            `json:"customerName"`
-	CustomerEmail   string            `json:"customerEmail"`
+	CustomerEmail   string            `json:"customerEmail,omitempty"`
 	TransactionNote string            `json:"transactionNote,omitempty"`
 	Notes           map[string]string `json:"notes,omitempty"`
 }
