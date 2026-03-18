@@ -22,6 +22,11 @@ const navItems = [
 export function Sidebar() {
   const pathname = usePathname();
 
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    window.location.href = "/login"; // Using window.location to force a full refresh/state clear
+  };
+
   return (
     <div className="w-64 border-r border-sidebar-border bg-sidebar min-h-screen flex flex-col fixed left-0 top-0 bottom-0 z-50">
       <div className="p-6 border-b border-sidebar-border">
@@ -46,7 +51,11 @@ export function Sidebar() {
         })}
       </div>
       <div className="p-4 border-t border-sidebar-border">
-        <Button variant="ghost" className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10">
+        <Button 
+          variant="ghost" 
+          className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
+          onClick={handleLogout}
+        >
           <LogOut className="mr-2 h-4 w-4" />
           Logout
         </Button>

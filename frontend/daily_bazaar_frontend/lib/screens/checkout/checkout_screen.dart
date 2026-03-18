@@ -1,4 +1,7 @@
 import '../../core/utils/responsive.dart';
+import 'package:daily_bazaar_frontend/shared_feature/api/order_api.dart';
+import 'package:daily_bazaar_frontend/shared_feature/config/config.dart';
+import 'package:daily_bazaar_frontend/shared_feature/helper/api_exception.dart';
 import 'package:daily_bazaar_frontend/shared_feature/provider/checkout_provider.dart';
 import 'package:daily_bazaar_frontend/shared_feature/widgets/checkout/bill_details_section.dart';
 import 'package:daily_bazaar_frontend/shared_feature/widgets/checkout/bottom_payment_bar.dart';
@@ -7,8 +10,10 @@ import 'package:daily_bazaar_frontend/shared_feature/widgets/checkout/delivery_a
 import 'package:daily_bazaar_frontend/shared_feature/widgets/checkout/delivery_eta_section.dart';
 import 'package:daily_bazaar_frontend/shared_feature/widgets/checkout/delivery_instructions_section.dart';
 import 'package:daily_bazaar_frontend/shared_feature/widgets/checkout/donation_section.dart';
+import 'package:daily_bazaar_frontend/screens/payment/payment_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:daily_bazaar_frontend/shared_feature/config/hive.dart';
 
 /// Unified checkout screen
 class CheckoutScreen extends ConsumerWidget {
@@ -118,18 +123,100 @@ class CheckoutScreen extends ConsumerWidget {
           child: BottomPaymentBar(
             totalAmount: checkoutState.formattedGrandTotalWithDonation,
             paymentMethod: 'BHIM UPI',
-            onPlaceOrder: () {
-              // TODO: Implement place order functionality
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Order placement not yet implemented'),
-                ),
-              );
-            },
+            onPlaceOrder: () => _placeOrder(context, checkoutState),
           ),
         ),
       ],
     );
+  }
+
+  Future<void> _placeOrder(BuildContext context, CheckoutState checkoutState) async {
+    try {
+      // Get auth token using TokenStorage (typed Box<String>)
+      final token = TokenStorage.getToken();
+      if (token == null || token.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please log in to place an order')),
+        );
+        return;
+      }
+
+      if (checkoutState.deliveryAddress == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select a delivery address')),
+        );
+        return;
+      }
+
+      if (checkoutState.cartItems.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Your cart is empty')),
+        );
+        return;
+      }
+
+      // Show loading
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(child: CircularProgressIndicator()),
+      );
+
+      final client = ApiClient(baseUrl: AppEnvironment.apiBaseUrl);
+      final orderApi = OrderApi(client);
+
+      final addr = checkoutState.deliveryAddress!;
+      final orderResp = await orderApi.createOrder(
+        shippingAddress: {
+          'full_name': addr.fullName,
+          'phone': addr.phone,
+          'address_line1': addr.addressLine1,
+          'address_line2': addr.addressLine2,
+          'city': addr.city,
+          'state': addr.state,
+          'pincode': addr.pincode,
+        },
+        items: checkoutState.cartItems
+            .map((item) => {
+                  'product_id': item.product.id,
+                  'quantity': item.quantity,
+                })
+            .toList(),
+        authToken: token,
+      );
+
+      final orderId = orderResp['id'] as String? ?? '';
+
+      if (!context.mounted) return;
+      Navigator.of(context).pop(); // dismiss loading
+
+      // Navigate to payment screen
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => PaymentScreen(
+            orderId: orderId,
+            customerName: addr.fullName,
+            customerEmail: '', // email not stored in Hive currently
+            authToken: token,
+            amountDisplay: checkoutState.formattedGrandTotalWithDonation,
+          ),
+        ),
+      );
+    } on ApiException catch (e) {
+      if (context.mounted) {
+        Navigator.of(context).pop(); // dismiss loading
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message)),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.of(context).pop(); // dismiss loading
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to place order: $e')),
+        );
+      }
+    }
   }
 
   Widget _buildDesktopLayout(
@@ -212,13 +299,7 @@ class CheckoutScreen extends ConsumerWidget {
                 BottomPaymentBar(
                   totalAmount: checkoutState.formattedGrandTotalWithDonation,
                   paymentMethod: 'BHIM UPI',
-                  onPlaceOrder: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Order placement not yet implemented'),
-                      ),
-                    );
-                  },
+                  onPlaceOrder: () => _placeOrder(context, checkoutState),
                 ),
               ],
             ),

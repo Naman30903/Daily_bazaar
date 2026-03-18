@@ -34,6 +34,7 @@ func main() {
 	orderService := services.NewOrderService(orderRepo, productRepo)
 	productImageService := services.NewProductImageService(productImageRepo, productRepo)
 	userAddressService := services.NewUserAddressService(userAddressRepo)
+	paymentService := services.NewPaymentService(cfg, orderRepo)
 
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(authService)
@@ -43,6 +44,7 @@ func main() {
 	orderHandler := handlers.NewOrderHandler(orderService, userRepo)
 	productImageHandler := handlers.NewProductImageHandler(productImageService)
 	userAddressHandler := handlers.NewUserAddressHandler(userAddressService)
+	paymentHandler := handlers.NewPaymentHandler(paymentService, userRepo)
 
 	// Initialize middleware
 	authMiddleware := middleware.NewAuthMiddleware(authService)
@@ -57,6 +59,7 @@ func main() {
 		orderHandler,
 		productImageHandler,
 		userAddressHandler,
+		paymentHandler,
 		authMiddleware,
 		adminMiddleware,
 	)

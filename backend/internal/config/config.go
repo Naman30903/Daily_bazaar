@@ -14,6 +14,12 @@ type Config struct {
 	SupabaseURL string
 	SupabaseKey string
 	JWTSecret   string
+
+	// UroPay payment gateway
+	UroPayAPIKey  string
+	UroPaySecret  string
+	UroPayVPA     string
+	UroPayVPAName string
 }
 
 func Load() (*Config, error) {
@@ -30,6 +36,11 @@ func Load() (*Config, error) {
 		SupabaseURL: strings.TrimSpace(os.Getenv("SUPABASE_URL")),
 		SupabaseKey: strings.TrimSpace(os.Getenv("SUPABASE_KEY")),
 		JWTSecret:   strings.TrimSpace(os.Getenv("JWT_SECRET")),
+
+		UroPayAPIKey:  strings.TrimSpace(os.Getenv("UROPAY_API_KEY")),
+		UroPaySecret:  strings.TrimSpace(os.Getenv("UROPAY_SECRET")),
+		UroPayVPA:     strings.TrimSpace(os.Getenv("UROPAY_VPA")),
+		UroPayVPAName: strings.TrimSpace(os.Getenv("UROPAY_VPA_NAME")),
 	}
 
 	if cfg.Port == "" {

@@ -15,6 +15,7 @@ func SetupRoutes(
 	orderHandler *handlers.OrderHandler,
 	productImageHandler *handlers.ProductImageHandler,
 	userAddressHandler *handlers.UserAddressHandler,
+	paymentHandler *handlers.PaymentHandler,
 	authMiddleware *middleware.AuthMiddleware,
 	adminMiddleware *middleware.AdminMiddleware,
 ) *http.ServeMux {
@@ -80,6 +81,14 @@ func SetupRoutes(
 	// Order routes (admin only)
 	mux.Handle("GET /api/orders", authMiddleware.Authenticate(adminMiddleware.RequireAdmin(http.HandlerFunc(orderHandler.GetAllOrders))))
 	mux.Handle("PUT /api/orders/{id}/status", authMiddleware.Authenticate(adminMiddleware.RequireAdmin(http.HandlerFunc(orderHandler.UpdateOrderStatus))))
+
+	// Payment routes (authenticated users)
+	mux.Handle("POST /api/payments/initiate", authMiddleware.Authenticate(http.HandlerFunc(paymentHandler.InitiatePayment)))
+	mux.Handle("POST /api/payments/reference", authMiddleware.Authenticate(http.HandlerFunc(paymentHandler.SubmitReference)))
+	mux.Handle("GET /api/payments/status/{orderId}", authMiddleware.Authenticate(http.HandlerFunc(paymentHandler.GetPaymentStatus)))
+
+	// Payment webhook (public - called by UroPay servers)
+	mux.HandleFunc("POST /api/payments/webhook", paymentHandler.Webhook)
 
 	// User Address routes (authenticated user)
 	mux.Handle("GET /api/user/addresses", authMiddleware.Authenticate(http.HandlerFunc(userAddressHandler.List)))

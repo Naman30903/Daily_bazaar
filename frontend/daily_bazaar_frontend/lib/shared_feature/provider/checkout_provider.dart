@@ -1,6 +1,7 @@
 import 'package:daily_bazaar_frontend/shared_feature/models/address_model.dart';
 import 'package:daily_bazaar_frontend/shared_feature/models/checkout_models.dart';
 import 'package:daily_bazaar_frontend/shared_feature/provider/cart_provider.dart';
+import 'package:daily_bazaar_frontend/shared_feature/provider/user_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'checkout_provider.g.dart';
@@ -78,12 +79,30 @@ class CheckoutController extends _$CheckoutController {
     final cartState = ref.watch(cartControllerProvider);
     final cartItems = cartState.cartItems;
 
+    // Get user's default address (or first available)
+    final userAsync = ref.watch(userControllerProvider);
+    UserAddress? defaultAddress;
+    userAsync.whenData((profile) {
+      final addrs = profile.addresses;
+      if (addrs.isNotEmpty) {
+        defaultAddress = addrs.cast<UserAddress?>().firstWhere(
+              (a) => a!.isDefault,
+              orElse: () => addrs.first,
+            );
+      }
+    });
+
     return CheckoutState(
       cartItems: cartItems,
       deliveryInstructions: _getInitialDeliveryInstructions(),
-      deliveryAddress: null,
+      deliveryAddress: defaultAddress,
       billDetails: _calculateBillDetails(cartItems),
     );
+  }
+
+  /// Set delivery address
+  void setDeliveryAddress(UserAddress address) {
+    state = state.copyWith(deliveryAddress: address);
   }
 
   /// Increment quantity of a cart item

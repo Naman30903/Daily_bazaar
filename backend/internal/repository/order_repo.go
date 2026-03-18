@@ -335,6 +335,40 @@ func (r *OrderRepository) DeleteOrder(id string) error {
 	return nil
 }
 
+func (r *OrderRepository) UpdatePaymentMetadata(orderID string, metadata map[string]interface{}) error {
+	urlStr := fmt.Sprintf("%s/rest/v1/orders?id=eq.%s", r.baseURL, orderID)
+
+	updates := map[string]interface{}{
+		"payment_metadata": metadata,
+	}
+
+	body, err := json.Marshal(updates)
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest(http.MethodPatch, urlStr, bytes.NewBuffer(body))
+	if err != nil {
+		return err
+	}
+
+	r.setHeaders(req)
+	req.Header.Set("Prefer", "return=minimal")
+
+	resp, err := r.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
+		respBody, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("failed to update payment metadata: status %d, body: %s", resp.StatusCode, string(respBody))
+	}
+
+	return nil
+}
+
 func (r *OrderRepository) setHeaders(req *http.Request) {
 	req.Header.Set("Authorization", "Bearer "+r.apiKey)
 	req.Header.Set("apikey", r.apiKey)
